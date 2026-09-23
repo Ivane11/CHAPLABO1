@@ -1,0 +1,6 @@
+{
+  "name": "CHAPLAB Medical LIS — SaaS Laboratoire Médical",
+  "description": "Système de laboratoire d'analyses médicales de nouvelle génération : dossiers patients, validation biologique ISO 15189, cartographie des bilans et impression de rapports haute fidélité.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
