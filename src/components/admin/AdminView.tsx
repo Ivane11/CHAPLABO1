@@ -14,6 +14,7 @@ import {
   Plus,
 } from 'lucide-react';
 import { Equipment, ExamDefinition, LabSettings } from '../../types';
+import { PwaUpdater } from './PwaUpdater';
 
 interface AdminViewProps {
   settings: LabSettings;
@@ -673,6 +674,7 @@ export const AdminView: React.FC<AdminViewProps> = ({
               </div>
             </div>
           </div>
+          <PwaUpdater />
         </div>
       )}
 
