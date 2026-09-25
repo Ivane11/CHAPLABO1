@@ -14,12 +14,15 @@ import { NewDossierWizard } from './components/wizard/NewDossierWizard';
 import { NewPatientModal } from './components/patients/NewPatientModal';
 import { ValidationModal } from './components/reports/ValidationModal';
 import { ReportPrintModal } from './components/print/ReportPrintModal';
+import { DossierDetailModal } from './components/dossiers/DossierDetailModal';
+import { LoginView } from './components/auth/LoginView';
 import { StorageService } from './utils/storage';
 import { INITIAL_PRESCRIBERS } from './data/initialData';
 import { DossierReport, ExamDefinition, LabSettings, Patient, ReportStatus } from './types';
 
 export type ViewMode =
   | 'home'
+  | 'login'
   | 'dashboard'
   | 'patients'
   | 'patient_profile'
@@ -31,14 +34,15 @@ export type ViewMode =
 
 export function App() {
   // Navigation View State
-  const [currentView, setCurrentView] = useState<ViewMode>('dashboard');
+  const [currentView, setCurrentView] = useState<ViewMode>('home');
 
   // Persistence State
-  const [patients, setPatients] = useState<Patient[]>(() => StorageService.getPatients());
-  const [dossiers, setDossiers] = useState<DossierReport[]>(() => StorageService.getDossiers());
-  const [catalog, setCatalog] = useState<ExamDefinition[]>(() => StorageService.getCatalog());
-  const [settings, setSettings] = useState<LabSettings>(() => StorageService.getSettings());
-  const [equipments, setEquipments] = useState(() => StorageService.getEquipments());
+  const [isDbLoaded, setIsDbLoaded] = useState(false);
+  const [patients, setPatients] = useState<Patient[]>([]);
+  const [dossiers, setDossiers] = useState<DossierReport[]>([]);
+  const [catalog, setCatalog] = useState<ExamDefinition[]>([]);
+  const [settings, setSettings] = useState<LabSettings>({} as LabSettings);
+  const [equipments, setEquipments] = useState<Equipment[]>([]);
 
   // Active Contexts
   const [selectedPatientId, setSelectedPatientId] = useState<string>(
@@ -49,6 +53,10 @@ export function App() {
   const [isWizardOpen, setIsWizardOpen] = useState(false);
   const [wizardPatientId, setWizardPatientId] = useState<string | undefined>(undefined);
   const [wizardPackId, setWizardPackId] = useState<string | undefined>(undefined);
+  const [editingDossier, setEditingDossier] = useState<DossierReport | undefined>(undefined);
+
+  const [isDossierDetailModalOpen, setIsDossierDetailModalOpen] = useState(false);
+  const [viewingDossier, setViewingDossier] = useState<DossierReport | null>(null);
 
   const [isNewPatientModalOpen, setIsNewPatientModalOpen] = useState(false);
 
@@ -59,22 +67,43 @@ export function App() {
   const [printingDossier, setPrintingDossier] = useState<DossierReport | null>(null);
   const [printLayoutMode, setPrintLayoutMode] = useState<'OFFICIAL_A4' | 'ISO_DOUBLE_A5'>('OFFICIAL_A4');
 
+  // Load data on mount
+  useEffect(() => {
+    async function initDB() {
+      const p = await StorageService.getPatients();
+      const d = await StorageService.getDossiers();
+      const c = await StorageService.getCatalog();
+      const s = await StorageService.getSettings();
+      const e = await StorageService.getEquipments();
+      
+      setPatients(p);
+      setDossiers(d);
+      setCatalog(c);
+      setSettings(s);
+      setEquipments(e);
+      if (p.length > 0) setSelectedPatientId(p[0].id);
+      
+      setIsDbLoaded(true);
+    }
+    initDB();
+  }, []);
+
   // Auto-persist whenever patients or dossiers change
   useEffect(() => {
-    StorageService.savePatients(patients);
-  }, [patients]);
+    if (isDbLoaded) StorageService.savePatients(patients);
+  }, [patients, isDbLoaded]);
 
   useEffect(() => {
-    StorageService.saveDossiers(dossiers);
-  }, [dossiers]);
+    if (isDbLoaded) StorageService.saveDossiers(dossiers);
+  }, [dossiers, isDbLoaded]);
 
   useEffect(() => {
-    StorageService.saveCatalog(catalog);
-  }, [catalog]);
+    if (isDbLoaded) StorageService.saveCatalog(catalog);
+  }, [catalog, isDbLoaded]);
 
   useEffect(() => {
-    StorageService.saveSettings(settings);
-  }, [settings]);
+    if (isDbLoaded) StorageService.saveSettings(settings);
+  }, [settings, isDbLoaded]);
 
   // Handlers for Patients
   const handleSelectPatient = (patientId: string) => {
@@ -96,9 +125,10 @@ export function App() {
   };
 
   // Handlers for Dossiers & Wizard
-  const handleOpenWizard = (patientId?: string, packId?: string) => {
+  const handleOpenWizard = (patientId?: string, packId?: string, dossierToEdit?: DossierReport) => {
     setWizardPatientId(patientId);
     setWizardPackId(packId);
+    setEditingDossier(dossierToEdit);
     setIsWizardOpen(true);
   };
 
@@ -112,12 +142,17 @@ export function App() {
     }
     setDossiers((prev) => [newDossier, ...prev]);
     setSelectedPatientId(newDossier.patientId);
+    setCurrentView('patient_profile'); // Ensure we see the dossier!
 
     if (shouldPrint) {
       setPrintingDossier(newDossier);
       setPrintLayoutMode('OFFICIAL_A4');
       setIsPrintModalOpen(true);
     }
+  };
+
+  const handleUpdateDossier = (updatedDossier: DossierReport) => {
+    setDossiers(prev => prev.map(d => d.id === updatedDossier.id ? updatedDossier : d));
   };
 
   const handleUpdateDossierResults = (
@@ -198,31 +233,35 @@ export function App() {
     );
   };
 
-  const handleExportBackup = () => {
-    StorageService.exportDatabaseBackup();
+  const handleUpdateExamPrice = (examId: string, newPrice: number) => {
+    setCatalog((prev) =>
+      prev.map((e) => (e.id === examId ? { ...e, price: newPrice } : e))
+    );
   };
 
-  const handleImportBackup = (jsonStr: string): boolean => {
-    const success = StorageService.importDatabaseBackup(jsonStr);
+  const handleExportBackup = async () => {
+    await StorageService.exportDatabaseBackup();
+  };
+
+  const handleImportBackup = async (jsonStr: string): Promise<boolean> => {
+    const success = await StorageService.importDatabaseBackup(jsonStr);
     if (success) {
-      setPatients(StorageService.getPatients());
-      setDossiers(StorageService.getDossiers());
-      setCatalog(StorageService.getCatalog());
-      setSettings(StorageService.getSettings());
-      setEquipments(StorageService.getEquipments());
+      setPatients(await StorageService.getPatients());
+      setDossiers(await StorageService.getDossiers());
+      setCatalog(await StorageService.getCatalog());
+      setSettings(await StorageService.getSettings());
+      setEquipments(await StorageService.getEquipments());
     }
     return success;
   };
 
-  const handleFactoryReset = () => {
-    if (window.confirm('Êtes-vous sûr de vouloir réinitialiser la base de données ? Toutes les modifications seront effacées.')) {
-      StorageService.factoryReset();
-      setPatients(StorageService.getPatients());
-      setDossiers(StorageService.getDossiers());
-      setCatalog(StorageService.getCatalog());
-      setSettings(StorageService.getSettings());
-      setEquipments(StorageService.getEquipments());
-    }
+  const handleFactoryReset = async () => {
+    await StorageService.factoryReset();
+    setPatients(await StorageService.getPatients());
+    setDossiers(await StorageService.getDossiers());
+    setCatalog(await StorageService.getCatalog());
+    setSettings(await StorageService.getSettings());
+    setEquipments(await StorageService.getEquipments());
   };
 
   const handlePurgeDrafts = () => {
@@ -241,12 +280,48 @@ export function App() {
   const printingPatient =
     patients.find((p) => p.id === printingDossier?.patientId) || null;
 
+  const viewingPatient = 
+    patients.find((p) => p.id === viewingDossier?.patientId) || null;
+
   const pendingValidationCount = dossiers.filter((d) => d.statut === 'A_VALIDER').length;
 
+  if (!isDbLoaded) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-slate-50">
+        <div className="flex flex-col items-center gap-4">
+          <div className="w-12 h-12 border-4 border-slate-200 border-t-[#6941C6] rounded-full animate-spin"></div>
+          <p className="text-slate-500 font-medium">Chargement de la base de données locale...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="min-h-screen bg-[#E5E7EB] p-2 sm:p-4 md:p-6 lg:p-8 flex items-center justify-center font-sans antialiased selection:bg-[#EEEDFC] selection:text-[#5B46F6]">
-      {/* Outer master rounded card matching exact screenshot layout */}
-      <div className="w-full max-w-[1540px] bg-white rounded-[32px] md:rounded-[36px] shadow-[0_20px_60px_rgba(0,0,0,0.06)] border border-slate-200/80 overflow-hidden flex flex-col lg:flex-row min-h-[920px]">
+    <>
+      {currentView === 'home' ? (
+        <div className="min-h-screen bg-[#F8FAFC] selection:bg-[#F2EEFF] selection:text-[#6941C6] font-sans antialiased">
+          <div className="max-w-[1540px] mx-auto px-4 sm:px-6 lg:px-8 py-8 lg:py-12">
+            <LandingPageView
+              settings={settings}
+              onNavigate={(view) => setCurrentView(view as ViewMode)}
+              onOpenNewDossier={() => handleOpenWizard()}
+              onOpenNewPatient={() => setIsNewPatientModalOpen(true)}
+              onOpenLogin={() => setCurrentView('login')}
+              patientsCount={patients.length}
+              dossiersCount={dossiers.length}
+              pendingCount={pendingValidationCount}
+            />
+          </div>
+        </div>
+      ) : currentView === 'login' ? (
+        <LoginView 
+          onLogin={() => setCurrentView('dashboard')}
+          onBack={() => setCurrentView('home')}
+        />
+      ) : (
+        <div className="min-h-screen bg-[#E5E7EB] p-2 sm:p-4 md:p-6 lg:p-8 flex items-center justify-center font-sans antialiased selection:bg-[#F2EEFF] selection:text-[#6941C6]">
+          {/* Outer master rounded card matching exact screenshot layout */}
+          <div className="app-window w-full max-w-[1540px] bg-white rounded-[32px] md:rounded-[36px] border border-white/40 overflow-hidden flex flex-col lg:flex-row min-h-[920px]">
         {/* Sidebar matching screenshot */}
         <Sidebar
           activeView={currentView === 'patient_profile' ? 'patient-profile' : (currentView as ActiveView)}
@@ -292,18 +367,6 @@ export function App() {
               />
             )}
 
-            {/* HOME / PRESENTATION VIEW */}
-            {currentView === 'home' && (
-              <LandingPageView
-                settings={settings}
-                onNavigate={(view) => setCurrentView(view as ViewMode)}
-                onOpenNewDossier={() => handleOpenWizard()}
-                onOpenNewPatient={() => setIsNewPatientModalOpen(true)}
-                patientsCount={patients.length}
-                dossiersCount={dossiers.length}
-                pendingCount={pendingValidationCount}
-              />
-            )}
 
             {/* PATIENTS VIEW */}
             {currentView === 'patients' && (
@@ -328,12 +391,17 @@ export function App() {
                 onUpdateDossierResults={handleUpdateDossierResults}
                 onPreviewReport={handlePreviewReport}
                 onPrintReport={handlePrintReport}
+                onViewDossier={(dossier) => {
+                  setViewingDossier(dossier);
+                  setIsDossierDetailModalOpen(true);
+                }}
               />
             )}
 
             {/* CLINICAL PACKS VIEW */}
             {currentView === 'packs' && (
               <PacksView
+                catalog={catalog}
                 onPrescribePack={(packId) => {
                   handleOpenWizard(undefined, packId);
                 }}
@@ -356,6 +424,10 @@ export function App() {
                 onOpenReportValidation={handleOpenValidation}
                 onPreviewReport={handlePreviewReport}
                 onPrintReport={handlePrintReport}
+                onViewDossier={(dossier) => {
+                  setViewingDossier(dossier);
+                  setIsDossierDetailModalOpen(true);
+                }}
               />
             )}
 
@@ -378,6 +450,7 @@ export function App() {
                 equipments={equipments}
                 onSaveSettings={(newSettings) => setSettings(newSettings)}
                 onToggleExamActive={handleToggleExamActive}
+                onUpdateExamPrice={handleUpdateExamPrice}
                 onExportBackup={handleExportBackup}
                 onImportBackup={handleImportBackup}
                 onFactoryReset={handleFactoryReset}
@@ -397,7 +470,9 @@ export function App() {
         prescribers={INITIAL_PRESCRIBERS}
         initialPatientId={wizardPatientId}
         initialPackId={wizardPackId}
+        editDossier={editingDossier}
         onCreateDossier={handleCreateDossier}
+        onUpdateDossier={handleUpdateDossier}
       />
 
       {/* NEW PATIENT MODAL */}
@@ -420,16 +495,36 @@ export function App() {
       />
 
       {/* OFFICIAL PRINT & PREVIEW MODAL */}
-      <ReportPrintModal
-        isOpen={isPrintModalOpen}
-        onClose={() => setIsPrintModalOpen(false)}
-        dossier={printingDossier}
-        patient={printingPatient}
+      {printingDossier && printingPatient && (
+        <ReportPrintModal
+          isOpen={isPrintModalOpen}
+          onClose={() => setIsPrintModalOpen(false)}
+          dossier={printingDossier}
+          patient={printingPatient}
+          catalog={catalog}
+          settings={settings}
+        />
+      )}
+
+      {/* VIEW DOSSIER MODAL */}
+      <DossierDetailModal
+        isOpen={isDossierDetailModalOpen}
+        onClose={() => setIsDossierDetailModalOpen(false)}
+        dossier={viewingDossier}
+        patient={viewingPatient}
         catalog={catalog}
-        settings={settings}
-        printMode={printLayoutMode}
+        onPrint={(d) => {
+          setIsDossierDetailModalOpen(false);
+          handlePrintReport(d);
+        }}
+        onEdit={(d) => {
+          setIsDossierDetailModalOpen(false);
+          handleOpenWizard(d.patientId, undefined, d);
+        }}
       />
-    </div>
+        </div>
+      )}
+    </>
   );
 }
 

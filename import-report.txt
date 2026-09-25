@@ -1,0 +1,13 @@
+RAPPORT D'IMPORT ACCESS
+Date : 9/24/2026, 10:36:20 AM
+Source : /Users/ivane/Downloads/access_export
+
+Examens lus : 2
+Doublons ignorés : 0
+Nouveaux examens : 2
+
+Liste des doublons ignorés :
+
+Liste des nouveaux examens :
+- EXM-HORM-TSH : Thyréostimuline (TSH)
+- EXM-HORM-VITD : Vitamine D (25-OH)

@@ -14,141 +14,153 @@ import {
   Patient,
   Prescriber,
 } from '../types';
+import { db } from './db';
 
-const KEYS = {
-  PATIENTS: 'chaplab_patients',
-  DOSSIERS: 'chaplab_dossiers',
-  SETTINGS: 'chaplab_settings',
-  CATALOG: 'chaplab_catalog',
-  EQUIPMENTS: 'chaplab_equipments',
-  PRESCRIBERS: 'chaplab_prescribers',
-};
+const SETTINGS_ID = 'main_settings';
 
 export const StorageService = {
-  getPatients(): Patient[] {
+  async getPatients(): Promise<Patient[]> {
     try {
-      const data = localStorage.getItem(KEYS.PATIENTS);
-      if (data) return JSON.parse(data);
+      return await db.patients.toArray();
     } catch (e) {
       console.error('Error reading patients from storage', e);
+      return [];
     }
-    this.savePatients(INITIAL_PATIENTS);
-    return INITIAL_PATIENTS;
   },
 
-  savePatients(patients: Patient[]) {
+  async savePatients(patients: Patient[]) {
     try {
-      localStorage.setItem(KEYS.PATIENTS, JSON.stringify(patients));
+      await db.patients.clear();
+      if (patients.length > 0) {
+        await db.patients.bulkAdd(patients);
+      }
     } catch (e) {
       console.error('Error saving patients', e);
     }
   },
 
-  getDossiers(): DossierReport[] {
+  async getDossiers(): Promise<DossierReport[]> {
     try {
-      const data = localStorage.getItem(KEYS.DOSSIERS);
-      if (data) return JSON.parse(data);
+      return await db.dossiers.toArray();
     } catch (e) {
       console.error('Error reading dossiers from storage', e);
+      return [];
     }
-    this.saveDossiers(INITIAL_DOSSIERS);
-    return INITIAL_DOSSIERS;
   },
 
-  saveDossiers(dossiers: DossierReport[]) {
+  async saveDossiers(dossiers: DossierReport[]) {
     try {
-      localStorage.setItem(KEYS.DOSSIERS, JSON.stringify(dossiers));
+      await db.dossiers.clear();
+      if (dossiers.length > 0) {
+        await db.dossiers.bulkAdd(dossiers);
+      }
     } catch (e) {
       console.error('Error saving dossiers', e);
     }
   },
 
-  getSettings(): LabSettings {
+  async getSettings(): Promise<LabSettings> {
     try {
-      const data = localStorage.getItem(KEYS.SETTINGS);
-      if (data) return { ...DEFAULT_LAB_SETTINGS, ...JSON.parse(data) };
+      const data = await db.settings.get(SETTINGS_ID);
+      if (data) return data;
     } catch (e) {
       console.error('Error reading settings', e);
     }
-    this.saveSettings(DEFAULT_LAB_SETTINGS);
+    await this.saveSettings(DEFAULT_LAB_SETTINGS);
     return DEFAULT_LAB_SETTINGS;
   },
 
-  saveSettings(settings: LabSettings) {
+  async saveSettings(settings: LabSettings) {
     try {
-      localStorage.setItem(KEYS.SETTINGS, JSON.stringify(settings));
+      await db.settings.put({ ...settings, id: SETTINGS_ID } as any);
     } catch (e) {
       console.error('Error saving settings', e);
     }
   },
 
-  getCatalog(): ExamDefinition[] {
+  async getCatalog(): Promise<ExamDefinition[]> {
     try {
-      const data = localStorage.getItem(KEYS.CATALOG);
-      if (data) return JSON.parse(data);
+      const data = await db.catalog.toArray();
+      if (data.length > 0) {
+        const updated = data.map((ex: any) =>
+          ex.id === 'EXM-ELECTRO-HB' || ex.id === 'EXM-SERO-WIDAL'
+            ? EXAM_CATALOG.find((e) => e.id === ex.id) || ex
+            : ex
+        );
+        return updated;
+      }
     } catch (e) {
       console.error('Error reading catalog', e);
     }
-    this.saveCatalog(EXAM_CATALOG);
+    await this.saveCatalog(EXAM_CATALOG);
     return EXAM_CATALOG;
   },
 
-  saveCatalog(catalog: ExamDefinition[]) {
+  async saveCatalog(catalog: ExamDefinition[]) {
     try {
-      localStorage.setItem(KEYS.CATALOG, JSON.stringify(catalog));
+      await db.catalog.clear();
+      if (catalog.length > 0) {
+        await db.catalog.bulkAdd(catalog);
+      }
     } catch (e) {
       console.error('Error saving catalog', e);
     }
   },
 
-  getEquipments(): Equipment[] {
+  async getEquipments(): Promise<Equipment[]> {
     try {
-      const data = localStorage.getItem(KEYS.EQUIPMENTS);
-      if (data) return JSON.parse(data);
+      const data = await db.equipments.toArray();
+      if (data.length > 0) return data;
     } catch (e) {
       console.error('Error reading equipments', e);
     }
-    this.saveEquipments(INITIAL_EQUIPMENTS);
+    await this.saveEquipments(INITIAL_EQUIPMENTS);
     return INITIAL_EQUIPMENTS;
   },
 
-  saveEquipments(equipments: Equipment[]) {
+  async saveEquipments(equipments: Equipment[]) {
     try {
-      localStorage.setItem(KEYS.EQUIPMENTS, JSON.stringify(equipments));
+      await db.equipments.clear();
+      if (equipments.length > 0) {
+        await db.equipments.bulkAdd(equipments);
+      }
     } catch (e) {
       console.error('Error saving equipments', e);
     }
   },
 
-  getPrescribers(): Prescriber[] {
+  async getPrescribers(): Promise<Prescriber[]> {
     try {
-      const data = localStorage.getItem(KEYS.PRESCRIBERS);
-      if (data) return JSON.parse(data);
+      const data = await db.prescribers.toArray();
+      if (data.length > 0) return data;
     } catch (e) {
       console.error('Error reading prescribers', e);
     }
-    this.savePrescribers(INITIAL_PRESCRIBERS);
+    await this.savePrescribers(INITIAL_PRESCRIBERS);
     return INITIAL_PRESCRIBERS;
   },
 
-  savePrescribers(prescribers: Prescriber[]) {
+  async savePrescribers(prescribers: Prescriber[]) {
     try {
-      localStorage.setItem(KEYS.PRESCRIBERS, JSON.stringify(prescribers));
+      await db.prescribers.clear();
+      if (prescribers.length > 0) {
+        await db.prescribers.bulkAdd(prescribers);
+      }
     } catch (e) {
       console.error('Error saving prescribers', e);
     }
   },
 
-  exportDatabaseBackup(): void {
+  async exportDatabaseBackup(): Promise<void> {
     const backup = {
       version: '2.5.0-SaaS',
       exportDate: new Date().toISOString(),
-      patients: this.getPatients(),
-      dossiers: this.getDossiers(),
-      settings: this.getSettings(),
-      catalog: this.getCatalog(),
-      equipments: this.getEquipments(),
-      prescribers: this.getPrescribers(),
+      patients: await this.getPatients(),
+      dossiers: await this.getDossiers(),
+      settings: await this.getSettings(),
+      catalog: await this.getCatalog(),
+      equipments: await this.getEquipments(),
+      prescribers: await this.getPrescribers(),
     };
 
     const blob = new Blob([JSON.stringify(backup, null, 2)], {
@@ -164,15 +176,15 @@ export const StorageService = {
     URL.revokeObjectURL(url);
   },
 
-  importDatabaseBackup(jsonString: string): boolean {
+  async importDatabaseBackup(jsonString: string): Promise<boolean> {
     try {
       const data = JSON.parse(jsonString);
-      if (Array.isArray(data.patients)) this.savePatients(data.patients);
-      if (Array.isArray(data.dossiers)) this.saveDossiers(data.dossiers);
-      if (data.settings) this.saveSettings(data.settings);
-      if (Array.isArray(data.catalog)) this.saveCatalog(data.catalog);
-      if (Array.isArray(data.equipments)) this.saveEquipments(data.equipments);
-      if (Array.isArray(data.prescribers)) this.savePrescribers(data.prescribers);
+      if (Array.isArray(data.patients)) await this.savePatients(data.patients);
+      if (Array.isArray(data.dossiers)) await this.saveDossiers(data.dossiers);
+      if (data.settings) await this.saveSettings(data.settings);
+      if (Array.isArray(data.catalog)) await this.saveCatalog(data.catalog);
+      if (Array.isArray(data.equipments)) await this.saveEquipments(data.equipments);
+      if (Array.isArray(data.prescribers)) await this.savePrescribers(data.prescribers);
       return true;
     } catch (e) {
       console.error('Failed to import backup JSON', e);
@@ -180,12 +192,12 @@ export const StorageService = {
     }
   },
 
-  factoryReset(): void {
-    this.savePatients(INITIAL_PATIENTS);
-    this.saveDossiers(INITIAL_DOSSIERS);
-    this.saveSettings(DEFAULT_LAB_SETTINGS);
-    this.saveCatalog(EXAM_CATALOG);
-    this.saveEquipments(INITIAL_EQUIPMENTS);
-    this.savePrescribers(INITIAL_PRESCRIBERS);
+  async factoryReset(): Promise<void> {
+    await this.savePatients([]);
+    await this.saveDossiers([]);
+    await this.saveSettings(DEFAULT_LAB_SETTINGS);
+    await this.saveCatalog(EXAM_CATALOG);
+    await this.saveEquipments(INITIAL_EQUIPMENTS);
+    await this.savePrescribers(INITIAL_PRESCRIBERS);
   },
 };

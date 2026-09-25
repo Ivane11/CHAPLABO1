@@ -33,6 +33,12 @@ export interface ReferenceRange {
   text?: string;
 }
 
+export interface AgeReference extends ReferenceRange {
+  minAge?: number;
+  maxAge?: number;
+  sex?: 'M' | 'F';
+}
+
 export interface ExamParameter {
   id: string;
   name: string;
@@ -43,6 +49,7 @@ export interface ExamParameter {
   femaleRef?: ReferenceRange;
   maleRef?: ReferenceRange;
   childRef?: ReferenceRange;
+  ageReferences?: AgeReference[];
   highlightColor?: string;
 }
 
@@ -91,6 +98,7 @@ export interface DossierReport {
   autoInterpretation?: string;
   examensInclus: string[];
   resultats: Record<string, string | number>;
+  examAutomates?: Record<string, string>; // Maps exam ID to automate name
   printFormatDefault?: 'A4' | 'DOUBLE_A5';
 }
 

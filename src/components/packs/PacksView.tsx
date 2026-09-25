@@ -5,208 +5,201 @@ import {
   Baby,
   Activity,
   Check,
+  Zap,
   ArrowRight,
   ShieldCheck,
-  FileSpreadsheet,
 } from 'lucide-react';
+import { ExamDefinition } from '../../types';
 
 interface PacksViewProps {
+  catalog: ExamDefinition[];
   onPrescribePack: (packId: string) => void;
 }
 
-export const PacksView: React.FC<PacksViewProps> = ({ onPrescribePack }) => {
-  const packs = [
+export const PacksView: React.FC<PacksViewProps> = ({ catalog, onPrescribePack }) => {
+  const packsData = [
     {
       id: 'PACK_BPN',
-      title: 'PACK BPN MATERNITÉ (SUIVI PRÉNATAL)',
+      title: 'BPN MATERNITÉ',
       category: 'Gynécologie & Obstétrique',
-      highlight: '⭐ Le Plus Prescrit · Protocole National',
+      highlight: '⭐ Le Plus Prescrit',
       color: 'purple',
       badge: '8 ANALYSES CLÉS',
-      description:
-        'Bilan systématique recommandé dès la première consultation prénatale (T1) pour la sécurité de la mère et du fœtus.',
+      description: 'Bilan de suivi prénatal systématique recommandé dès la première consultation (T1).',
       exams: [
-        'NFS Formule Sanguine Complète (Mindray 3-Part)',
-        'Groupage Sanguin ABO + Rhésus (Double épreuve)',
-        'Électrophorèse de l’Hémoglobine (Dépistage Drépanocytose)',
-        'Goutte Épaisse & Recherche Paludisme',
-        'Glycémie à jeun (Dépistage Diabète gestationnel)',
-        'Bandelette Urinaire (Protéinurie, Glycosurie, Nitrites)',
-        'Sérologies Dépistage : Ag HBs, Toxoplasmose, Rubéole, Syphilis',
-        'Sortie certifiée A4 Portrait avec filigrane médical',
+        'NFS Complète',
+        'Groupage Sanguin ABO-Rh',
+        'Électrophorèse de l’Hb',
+        'Goutte Épaisse & Paludisme',
+        'Glycémie à jeun',
+        'Bandelette Urinaire',
+        'Sérologies: Ag HBs, Toxo, Rubéole, Syphilis',
+        'Sortie certifiée A4',
       ],
-      price: '18 000 FCFA',
-      originalPrice: '25 500 FCFA',
+      examIds: ['EXM-NFS', 'EXM-GS-RH', 'EXM-ELECTRO-HB', 'EXM-GOUTTE-EPAISSE', 'EXM-BIO-GLYCEMIE', 'EXM-URINES-BANDELETTE', 'EXM-SERO-INFECTIEUX'],
+      discountPercentage: 30, // 30% discount
     },
     {
       id: 'BILAN_METABOLIQUE',
-      title: 'BILAN MÉTABOLIQUE & CARDIO-RÉNAL',
+      title: 'BILAN MÉTABOLIQUE',
       category: 'Médecine Interne & Diabétologie',
       highlight: 'Suivi Diabète & HTA',
       color: 'blue',
       badge: 'EXPLORATION COMPLÈTE',
-      description:
-        'Évaluation globale du risque cardiovasculaire, de l’équilibre glycémique trimestriel et de la fonction rénale.',
+      description: 'Évaluation du risque cardiovasculaire, de l’équilibre glycémique et fonction rénale.',
       exams: [
-        'Glycémie à jeun & Hémoglobine Glyquée (HbA1c)',
-        'Créatininémie & Débit de Filtration Glomérulaire (CKD-EPI)',
-        'Urée sanguine & Acide Urique',
-        'Profil Lipidique complet (Cholestérol Total, HDL, LDL, Triglycérides)',
-        'Ionogramme Sanguin (Sodium, Potassium, Chlore)',
-        'Ratio d’albuminurie sur échantillon',
+        'Glycémie & HbA1c',
+        'Créatininémie & DFG',
+        'Urée & Acide Urique',
+        'Profil Lipidique Complet',
+        'Ionogramme Sanguin',
+        'Ratio d’albuminurie',
       ],
-      price: '16 500 FCFA',
-      originalPrice: '22 000 FCFA',
+      examIds: ['EXM-BIO-GLYCEMIE', 'EXM-BIO-RENAL', 'EXM-BIO-LIPIDIQUE', 'EXM-IONOGRAMME'],
+      discountPercentage: 25,
     },
     {
       id: 'BILAN_PEDIATRIQUE',
-      title: 'BILAN PÉDIATRIQUE & SANTÉ SCOLAIRE (BPS)',
+      title: 'BILAN PÉDIATRIQUE',
       category: 'Pédiatrie & Néonatalogie',
       highlight: 'Spécial Enfant',
       color: 'emerald',
       badge: 'DÉPISTAGE PRÉCOCE',
-      description:
-        'Bilan de santé global pour enfant : dépistage précoce des anémies, des hémoglobinopathies et parasitoses.',
+      description: 'Bilan de santé global enfant : anémies, hémoglobinopathies et parasitoses.',
       exams: [
-        'NFS Pédiatrique avec indices érythrocytaires adaptés',
-        'Électrophorèse de l’Hémoglobine (Dépistage précoce drépanocytose)',
-        'Goutte Épaisse microscopique (Paludisme)',
-        'Examen Parasitologique des Selles (KOP amibes & helminthes)',
-        'Carte de Groupe Sanguin pédiatrique officielle',
+        'NFS Pédiatrique',
+        'Électrophorèse de l’Hb',
+        'Goutte Épaisse (Paludisme)',
+        'Examen Parasitologique Selles',
+        'Carte de Groupe Sanguin',
       ],
-      price: '12 000 FCFA',
-      originalPrice: '17 000 FCFA',
-    },
-    {
-      id: 'BILAN_PREOP',
-      title: 'BILAN DE CHIRURGIE & PRÉ-OPÉRATOIRE',
-      category: 'Anesthésie & Chirurgie',
-      highlight: 'Sécurité Bloc',
-      color: 'slate',
-      badge: 'HÉMOSTASE & HÉMATO',
-      description:
-        'Bilan d’hémostase obligatoire avant tout acte chirurgical pour prévenir le risque hémorragique ou thrombotique.',
-      exams: [
-        'Hémogramme Complet (NFS & Numération Plaquettes)',
-        'Taux de Prothrombine (TP) et INR',
-        'Temps de Céphaline Activée (TCA)',
-        'Fibrinogène chronométrique',
-        'Groupage Sanguin ABO + Rh (Validation double détermination)',
-        'Créatininémie & Ionogramme',
-      ],
-      price: '14 500 FCFA',
-      originalPrice: '19 500 FCFA',
+      examIds: ['EXM-NFS', 'EXM-ELECTRO-HB', 'EXM-GOUTTE-EPAISSE', 'EXM-GS-RH'],
+      discountPercentage: 30,
     },
   ];
 
-  return (
-    <div className="space-y-6">
-      {/* View Header */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-2">
-        <div>
-          <h2 className="text-xl font-bold tracking-tight text-slate-900">
-            Packs & Bilans Cliniques Groupés
-          </h2>
-          <p className="text-xs text-slate-500">
-            Regroupements standardisés d'examens pour prescriptions rapides, traçabilité optimale et tarifs préférentiels.
-          </p>
-        </div>
+  const packs = packsData.map(pack => {
+    let originalPriceNum = 0;
+    // Check if the catalog contains the exams to sum their prices
+    pack.examIds.forEach(id => {
+      const found = catalog.find(e => e.id === id);
+      if (found) {
+        originalPriceNum += found.price;
+      }
+    });
+    
+    // Fallback if some exams are missing from catalog or original sum is 0
+    if (originalPriceNum === 0) {
+      if (pack.id === 'PACK_BPN') originalPriceNum = 25500;
+      if (pack.id === 'BILAN_METABOLIQUE') originalPriceNum = 22000;
+      if (pack.id === 'BILAN_PEDIATRIQUE') originalPriceNum = 17000;
+    }
 
-        <div className="flex items-center gap-1.5 text-xs text-purple-700 bg-purple-50 border border-purple-200 px-3 py-1.5 rounded-lg font-semibold">
-          <ShieldCheck className="w-4 h-4 text-purple-600" />
-          <span>Protocoles Validés par Biologiste</span>
-        </div>
+    const priceNum = Math.floor(originalPriceNum * (1 - pack.discountPercentage / 100));
+    
+    return {
+      ...pack,
+      originalPrice: `${originalPriceNum.toLocaleString('fr-FR')} FCFA`,
+      price: `${priceNum.toLocaleString('fr-FR')} FCFA`,
+    };
+  });
+
+  return (
+    <div className="space-y-10 pb-10">
+      {/* View Header */}
+      <div className="text-center pt-6 pb-2">
+        <h2 className="text-[28px] sm:text-[32px] font-extrabold tracking-tight text-slate-900 font-sans">
+          Choisissez le Bilan Adapté
+        </h2>
+        <p className="text-[13px] text-slate-500 mt-2 font-medium">
+          Regroupements standardisés pour prescriptions rapides, avec tarifs préférentiels.
+        </p>
       </div>
 
       {/* Packs Showcase Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {packs.map((pack) => (
-          <div
-            key={pack.id}
-            className={`bg-white rounded-2xl border transition-all shadow-sm overflow-hidden flex flex-col justify-between ${
-              pack.id === 'PACK_BPN'
-                ? 'border-purple-300 ring-2 ring-purple-100 shadow-purple-500/5'
-                : 'border-slate-200 hover:border-slate-300'
-            }`}
-          >
-            <div>
-              {/* Card Header */}
-              <div
-                className={`p-6 border-b ${
-                  pack.color === 'purple'
-                    ? 'bg-gradient-to-r from-purple-50 via-purple-50/50 to-indigo-50/40 border-purple-100'
-                    : pack.color === 'blue'
-                    ? 'bg-gradient-to-r from-blue-50 via-blue-50/50 to-sky-50/40 border-blue-100'
-                    : pack.color === 'emerald'
-                    ? 'bg-gradient-to-r from-emerald-50 via-emerald-50/50 to-teal-50/40 border-emerald-100'
-                    : 'bg-slate-50 border-slate-100'
-                }`}
-              >
-                <div className="flex items-center justify-between gap-2 mb-2">
-                  <span className="text-[10px] font-extrabold tracking-wider uppercase px-2 py-0.5 rounded-full bg-white/80 border border-slate-200 text-slate-700">
-                    {pack.badge}
-                  </span>
-                  <span className="text-xs font-bold text-indigo-700">
-                    {pack.highlight}
-                  </span>
-                </div>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 px-4 sm:px-6 lg:px-8 max-w-[1200px] mx-auto">
+        {packs.map((pack) => {
+          const isHighlighted = pack.id === 'PACK_BPN';
 
-                <h3 className="text-base font-extrabold text-slate-900 tracking-tight leading-snug">
-                  {pack.title}
+          return (
+            <div
+              key={pack.id}
+              className={`relative glass-panel transition-all overflow-hidden flex flex-col justify-between ${
+                pack.id === 'PACK_BPN'
+                  ? 'bg-gradient-to-br from-[#E0FF5F] to-[#F1FF9F] text-slate-900 border-white/50 shadow-xl transform xl:-translate-y-4'
+                  : pack.id === 'BILAN_METABOLIQUE'
+                  ? 'bg-gradient-to-br from-[#FFE5E5] to-[#FFF0E5] text-slate-900 border-white/50'
+                  : 'bg-gradient-to-br from-[#E5F5FF] to-[#F0F8FF] text-slate-900 border-white/50'
+              }`}
+            >
+              {isHighlighted && (
+                <div className="absolute top-0 left-0 right-0 flex justify-center">
+                  <div className="bg-slate-900 text-[#E0FF5F] text-[11px] font-bold uppercase tracking-wider px-6 py-1.5 rounded-b-2xl shadow-sm">
+                    {pack.highlight}
+                  </div>
+                </div>
+              )}
+
+              <div className={`p-8 ${isHighlighted ? 'pt-10' : 'pt-8'}`}>
+                {/* Title & Desc */}
+                <h3 className="text-[20px] font-extrabold tracking-tight leading-snug text-slate-900">
+                  {pack.id === 'PACK_BPN' ? 'BPN Maternité' :
+                   pack.id === 'BILAN_METABOLIQUE' ? 'Métabolique' :
+                   pack.id === 'BILAN_PEDIATRIQUE' ? 'Pédiatrique' : 'Pré-Opératoire'}
                 </h3>
-                <p className="text-xs text-slate-600 mt-1 font-medium">
+                <p className="text-[13px] mt-2 font-medium leading-relaxed min-h-[60px] text-slate-600/90">
                   {pack.description}
                 </p>
-              </div>
 
-              {/* Exams Features Checklist */}
-              <div className="p-6 space-y-2.5">
-                <div className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-3">
-                  ANALYSES INCLUSES DANS CE PACK :
-                </div>
-                {pack.exams.map((examText, idx) => (
-                  <div key={idx} className="flex items-start gap-2.5 text-xs text-slate-700">
-                    <div className="w-4 h-4 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center shrink-0 mt-0.5">
-                      <Check className="w-2.5 h-2.5 stroke-[3]" />
-                    </div>
-                    <span className="leading-tight">{examText}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Card Footer with Price & Action */}
-            <div className="p-6 pt-0">
-              <div className="pt-4 border-t border-slate-100 flex items-center justify-between gap-4">
-                <div>
-                  <div className="text-[10px] text-slate-400 line-through font-mono">
+                {/* Price */}
+                <div className="mt-6 mb-8">
+                  <div className="text-[13px] font-bold line-through mb-1 text-slate-500">
                     {pack.originalPrice}
                   </div>
-                  <div className="text-lg font-extrabold text-slate-900 font-mono">
-                    {pack.price}
+                  <div className="flex items-baseline gap-1">
+                    <span className="text-[32px] font-extrabold tracking-tight leading-none text-slate-900">
+                      {pack.price.replace(' FCFA', '')}
+                    </span>
+                    <span className="text-[13px] font-bold text-slate-600">
+                      FCFA
+                    </span>
                   </div>
                 </div>
 
+                {/* Select Button */}
                 <button
                   type="button"
                   onClick={() => onPrescribePack(pack.id)}
-                  className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-bold transition-all shadow-md cursor-pointer ${
-                    pack.color === 'purple'
-                      ? 'bg-purple-600 hover:bg-purple-500 text-white shadow-purple-600/25'
-                      : pack.color === 'blue'
-                      ? 'bg-blue-600 hover:bg-blue-500 text-white shadow-blue-600/25'
-                      : pack.color === 'emerald'
-                      ? 'bg-emerald-600 hover:bg-emerald-500 text-white shadow-emerald-600/25'
-                      : 'bg-slate-900 hover:bg-slate-800 text-white shadow-slate-900/25'
+                  className={`w-full py-3.5 rounded-full text-[14px] font-bold transition-all shadow-sm cursor-pointer smooth-press mb-8 ${
+                    pack.id === 'PACK_BPN'
+                      ? 'bg-rose-600 hover:bg-rose-700 text-white shadow-rose-900/20'
+                      : 'bg-slate-900 hover:bg-slate-800 text-white shadow-slate-900/20'
                   }`}
                 >
-                  <span>Sélectionner ce Pack</span>
-                  <ArrowRight className="w-3.5 h-3.5" />
+                  Sélectionner ce Pack
                 </button>
+
+                {/* Divider Line */}
+                <div className="h-px w-full mb-6 bg-slate-900/10" />
+
+                {/* Features */}
+                <div className="space-y-4">
+                  <div className="text-[13px] font-bold text-slate-900">
+                    Analyses incluses :
+                  </div>
+                  <div className="space-y-3">
+                    {pack.exams.map((examText, idx) => (
+                      <div key={idx} className="flex items-start gap-3 text-[13px] font-medium leading-snug">
+                        <Zap className="w-4 h-4 shrink-0 mt-0.5 text-slate-700" fill="currentColor" />
+                        <span className="text-slate-700">{examText}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
               </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );

@@ -13,6 +13,15 @@ import {
   Check,
   AlertCircle,
   Stethoscope,
+  Plus,
+  ChevronRight,
+  ChevronLeft,
+  Droplet,
+  Bug,
+  FlaskConical,
+  Shield,
+  Activity,
+  MessageSquare
 } from 'lucide-react';
 import { DossierReport, ExamDefinition, Patient, Prescriber } from '../../types';
 import {
@@ -20,6 +29,26 @@ import {
   getEffectiveReference,
   interpretHematologyNFS,
 } from '../../utils/interpretation';
+import { ResultGrid } from '../saisie/ResultGrid';
+
+const getExamStyles = (examId: string) => {
+  if (examId.startsWith('EXM-NFS') || examId.includes('HEMATO')) {
+    return { bg: 'linear-gradient(to bottom right, #FEF2F2, #FFF1F2)', headerBg: 'linear-gradient(to right, #DC2626, #EF4444)', border: '#DC2626', icon: Droplet, labelColor: '#DC2626' };
+  }
+  if (examId.includes('GOUTTE-EPAISSE') || examId.includes('PARASITO')) {
+    return { bg: 'linear-gradient(to bottom right, #FFF7ED, #FFEDD5)', headerBg: 'linear-gradient(to right, #EA580C, #F97316)', border: '#EA580C', icon: Bug, labelColor: '#EA580C' };
+  }
+  if (examId.startsWith('EXM-BIO')) {
+    return { bg: 'linear-gradient(to bottom right, #ECFDF5, #D1FAE5)', headerBg: 'linear-gradient(to right, #059669, #10B981)', border: '#059669', icon: FlaskConical, labelColor: '#059669' };
+  }
+  if (examId.startsWith('EXM-SERO')) {
+    return { bg: 'linear-gradient(to bottom right, #FEFCE8, #FEF08A)', headerBg: 'linear-gradient(to right, #CA8A04, #EAB308)', border: '#CA8A04', icon: Shield, labelColor: '#CA8A04' };
+  }
+  if (examId.startsWith('EXM-HORM')) {
+    return { bg: 'linear-gradient(to bottom right, #FDF2F8, #FBCFE8)', headerBg: 'linear-gradient(to right, #DB2777, #EC4899)', border: '#DB2777', icon: Activity, labelColor: '#DB2777' };
+  }
+  return { bg: 'linear-gradient(to bottom right, #F8FAFC, #F1F5F9)', headerBg: 'linear-gradient(to right, #475569, #64748B)', border: '#475569', icon: FileCheck, labelColor: '#475569' };
+};
 
 interface NewDossierWizardProps {
   isOpen: boolean;
@@ -29,7 +58,9 @@ interface NewDossierWizardProps {
   prescribers: Prescriber[];
   initialPatientId?: string;
   initialPackId?: string;
+  editDossier?: DossierReport;
   onCreateDossier: (dossier: DossierReport, newPatient?: Patient, shouldPrint?: boolean) => void;
+  onUpdateDossier?: (dossier: DossierReport) => void;
 }
 
 export const NewDossierWizard: React.FC<NewDossierWizardProps> = ({
@@ -40,19 +71,24 @@ export const NewDossierWizard: React.FC<NewDossierWizardProps> = ({
   prescribers,
   initialPatientId,
   initialPackId,
+  editDossier,
   onCreateDossier,
+  onUpdateDossier,
 }) => {
   if (!isOpen) return null;
+
+  // UUID generation for robust IDs
+  const generateId = (prefix: string) => `${prefix}-${new Date().getTime().toString(36)}-${Math.random().toString(36).substr(2, 5)}`;
 
   const [step, setStep] = useState<1 | 2 | 3>(1);
   const [errorMessage, setErrorMessage] = useState('');
 
   // Step 1: Patient mode (existing vs new)
   const [patientMode, setPatientMode] = useState<'existing' | 'new'>(
-    initialPatientId ? 'existing' : 'existing'
+    initialPatientId || editDossier ? 'existing' : 'existing'
   );
   const [selectedPatientId, setSelectedPatientId] = useState<string>(
-    initialPatientId || patients[0]?.id || ''
+    editDossier ? editDossier.patientId : initialPatientId || patients[0]?.id || ''
   );
 
   // New patient form fields
@@ -69,13 +105,14 @@ export const NewDossierWizard: React.FC<NewDossierWizardProps> = ({
   const [newPatientClinical, setNewPatientClinical] = useState('');
 
   // Step 2: Exams & Parameters
-  const [sampleType, setSampleType] = useState('Sang total EDTA');
-  const [automateType, setAutomateType] = useState('Mindray BC-30s');
+  const [sampleType, setSampleType] = useState(editDossier?.sampleType || 'Sang total EDTA');
+  const [automateType, setAutomateType] = useState(editDossier?.automateType || '');
   const [dossierDate, setDossierDate] = useState(
-    new Date().toISOString().slice(0, 10)
+    editDossier ? editDossier.date : new Date().toISOString().slice(0, 10)
   );
   const [examSearch, setExamSearch] = useState('');
   const [selectedExamIds, setSelectedExamIds] = useState<string[]>(() => {
+    if (editDossier) return editDossier.examensInclus || [];
     if (initialPackId === 'PACK_BPN') {
       return ['EXM-NFS', 'EXM-GS-RH', 'EXM-ELECTRO-HB', 'EXM-GOUTTE-EPAISSE', 'EXM-BIO-GLYCEMIE', 'EXM-SERO-INFECTIEUX', 'EXM-URINES-BANDELETTE'];
     }
@@ -87,6 +124,7 @@ export const NewDossierWizard: React.FC<NewDossierWizardProps> = ({
 
   // Step 3: Results inputs
   const [resultsData, setResultsData] = useState<Record<string, any>>(() => {
+    if (editDossier) return { ...editDossier.resultats };
     const initial: Record<string, any> = {};
     if (selectedExamIds.includes('EXM-GOUTTE-EPAISSE')) {
       initial['GE_RESULTAT'] = 'Négatif';
@@ -96,14 +134,15 @@ export const NewDossierWizard: React.FC<NewDossierWizardProps> = ({
     }
     return initial;
   });
-  const [observations, setObservations] = useState('');
+  const [examAutomates, setExamAutomates] = useState<Record<string, string>>(() => editDossier?.examAutomates || {});
+  const [observations, setObservations] = useState(editDossier?.observations || '');
 
   // Active patient resolved
   const activePatient: Patient =
     patientMode === 'existing'
       ? patients.find((p) => p.id === selectedPatientId) || patients[0]
       : {
-          id: `CHP-2026-000${patients.length + 1}`,
+          id: generateId('CHP'),
           nom: newPatientNom || 'NOUVEAU',
           prenom: newPatientPrenom || 'PATIENT',
           sexe: newPatientSexe,
@@ -152,15 +191,17 @@ export const NewDossierWizard: React.FC<NewDossierWizardProps> = ({
   const handleAutoInterpret = () => {
     if (selectedExamIds.includes('EXM-NFS')) {
       const interp = interpretHematologyNFS(resultsData, activePatient);
-      setObservations((prev) => {
-        const lead = prev ? `${prev}\n\n` : '';
-        return `${lead}Conclusion Biologique : ${interp.summary}`;
+      setResultsData((prev) => {
+        const lead = prev['COMMENT_EXM-NFS'] ? `${prev['COMMENT_EXM-NFS']}\n\n` : '';
+        return {
+          ...prev,
+          'COMMENT_EXM-NFS': `${lead}Conclusion Biologique : ${interp.summary}`
+        };
       });
     }
   };
 
   const handleFinalSubmit = (shouldPrint: boolean) => {
-    const reportId = `RPT-2026-00${Math.floor(10 + Math.random() * 90)}`;
     const createdPatient: Patient | undefined =
       patientMode === 'new' ? activePatient : undefined;
 
@@ -173,8 +214,8 @@ export const NewDossierWizard: React.FC<NewDossierWizardProps> = ({
         ? 'Bilan Métabolique & Biochimie'
         : 'Analyses Médicales Multi-paramètres';
 
-    const newDossier: DossierReport = {
-      id: reportId,
+    const finalDossier: DossierReport = {
+      id: editDossier ? editDossier.id : generateId('RPT'),
       patientId: activePatient.id,
       date: dossierDate,
       nomExamen: examTitle,
@@ -188,110 +229,106 @@ export const NewDossierWizard: React.FC<NewDossierWizardProps> = ({
       automateType,
       prescripteur: activePatient.prescripteur || 'Consultation Externe',
       service: activePatient.service || 'Dispensaire',
-      statut: 'VALIDE',
-      biologisteValidateur: 'Dr. Ivane B. Kouassi',
-      dateValidation: `${dossierDate} à ${new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}`,
-      observations,
+      statut: editDossier ? editDossier.statut : 'VALIDE',
+      biologisteValidateur: editDossier ? editDossier.biologisteValidateur : 'Dr. Ivane B. Kouassi',
+      dateValidation: editDossier ? editDossier.dateValidation : `${dossierDate} à ${new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}`,
+      observations: observations,
       examensInclus: selectedExamIds,
       resultats: resultsData,
+      examAutomates: examAutomates,
     };
 
-    onCreateDossier(newDossier, createdPatient, shouldPrint);
+    if (editDossier && onUpdateDossier) {
+      onUpdateDossier(finalDossier);
+    } else {
+      onCreateDossier(finalDossier, createdPatient, shouldPrint);
+    }
+    
     onClose();
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/45 backdrop-blur-md select-none no-print">
-      <div className="bg-white/95 backdrop-blur-2xl rounded-[30px] border border-slate-200/90 shadow-2xl w-full max-w-3xl max-h-[92vh] flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-150">
-        {/* Wizard Header & Stepper */}
-        <div className="px-6 py-4.5 border-b border-slate-100 flex items-center justify-between bg-gradient-to-r from-slate-50 via-white to-[#EEEDFC]/40">
-          <div>
-            <h3 className="text-base font-extrabold text-slate-900 tracking-tight font-sans">
-              Nouveau Dossier d'Analyse Médicale
-            </h3>
-            <p className="text-xs text-slate-400">
-              Workflow standardisé conforme aux exigences médico-légales ISO 15189
-            </p>
-          </div>
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 select-none">
+      <div className="bg-white rounded-sm border border-slate-300 w-full max-w-3xl max-h-[92vh] flex flex-col overflow-hidden">
+        {/* Wizard Header */}
+        <div className="px-3 py-2 border-b border-slate-300 flex items-center justify-between bg-white border-l-4 border-l-[#5B46F6]">
+          <h3 className="text-[13px] font-bold text-slate-900 uppercase">
+            {editDossier ? 'MODIFICATION DU DOSSIER' : "NOUVEAU DOSSIER D'ANALYSE"}
+          </h3>
           <button
             onClick={onClose}
-            className="w-8 h-8 rounded-full flex items-center justify-center text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors cursor-pointer"
+            className="w-6 h-6 flex items-center justify-center text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-sm cursor-pointer"
           >
             <X className="w-4 h-4" />
           </button>
         </div>
 
-        {/* Linear Stepper Indicator */}
-        <div className="px-6 py-3 border-b border-slate-100 bg-white flex items-center justify-between gap-4">
-          <div className="flex items-center gap-2">
-            <span
-              className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold transition-all ${
-                step >= 1 ? 'bg-[#5B46F6] text-white shadow-xs' : 'bg-slate-100 text-slate-500'
-              }`}
-            >
-              1
-            </span>
-            <span className={`text-xs font-bold ${step >= 1 ? 'text-slate-900' : 'text-slate-400'}`}>
-              Patient
-            </span>
-          </div>
-
-          <div className="flex-1 h-0.5 bg-slate-100 mx-2" />
-
-          <div className="flex items-center gap-2">
-            <span
-              className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold transition-all ${
-                step >= 2 ? 'bg-[#5B46F6] text-white shadow-xs' : 'bg-slate-100 text-slate-500'
-              }`}
-            >
-              2
-            </span>
-            <span className={`text-xs font-bold ${step >= 2 ? 'text-slate-900' : 'text-slate-400'}`}>
-              Examens & Bilans
-            </span>
-          </div>
-
-          <div className="flex-1 h-0.5 bg-slate-100 mx-2" />
-
-          <div className="flex items-center gap-2">
-            <span
-              className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold transition-all ${
-                step >= 3 ? 'bg-[#5B46F6] text-white shadow-xs' : 'bg-slate-100 text-slate-500'
-              }`}
-            >
-              3
-            </span>
-            <span className={`text-xs font-bold ${step >= 3 ? 'text-slate-900' : 'text-slate-400'}`}>
-              Résultats & Validation
-            </span>
-          </div>
+        {/* Stepper Tabs */}
+        <div className="flex items-center border-b border-slate-300 bg-white text-[12px] font-semibold">
+          <button
+            onClick={() => setStep(1)}
+            className={`h-7 px-4 border-r border-slate-300 flex items-center gap-1.5 transition-colors ${
+              step === 1 ? 'bg-[#5B46F6] text-white' : step > 1 ? 'bg-[#EEEDFC] text-[#5B46F6]' : 'bg-slate-50 text-slate-400'
+            }`}
+          >
+            <span>1</span>
+            <span>Patient</span>
+          </button>
+          <button
+            onClick={() => {
+              if (step >= 2 || (patientMode === 'existing' || (newPatientNom.trim() && newPatientPrenom.trim()))) {
+                setStep(2);
+                setErrorMessage('');
+              }
+            }}
+            className={`h-7 px-4 border-r border-slate-300 flex items-center gap-1.5 transition-colors ${
+              step === 2 ? 'bg-[#5B46F6] text-white' : step > 2 ? 'bg-[#EEEDFC] text-[#5B46F6]' : 'bg-slate-50 text-slate-400'
+            }`}
+          >
+            <span>2</span>
+            <span>Examens & Bilans</span>
+          </button>
+          <button
+            onClick={() => {
+              if (step >= 3 || (selectedExamIds.length > 0 && (patientMode === 'existing' || (newPatientNom.trim() && newPatientPrenom.trim())))) {
+                setStep(3);
+                setErrorMessage('');
+              }
+            }}
+            className={`h-7 px-4 border-r border-slate-300 flex items-center gap-1.5 transition-colors ${
+              step === 3 ? 'bg-[#5B46F6] text-white' : 'bg-slate-50 text-slate-400'
+            }`}
+          >
+            <span>3</span>
+            <span>Résultats & Valid.</span>
+          </button>
         </div>
 
         {/* Error notification banner */}
         {errorMessage && (
-          <div className="mx-6 mt-3 p-3 rounded-2xl bg-rose-50 border border-rose-200 text-xs text-rose-700 flex items-center gap-2">
-            <AlertCircle className="w-4 h-4 shrink-0 text-rose-600" />
-            <span>{errorMessage}</span>
+          <div className="h-7 mx-3 mt-3 px-3 bg-[#FEE2E2] flex items-center gap-2">
+            <AlertCircle className="w-[12px] h-[12px] shrink-0 text-[#DC2626]" />
+            <span className="text-[#DC2626] text-[11px] font-semibold">{errorMessage}</span>
           </div>
         )}
 
         {/* Modal Scrollable Body */}
-        <div className="flex-1 overflow-y-auto p-6">
+        <div className="flex-1 overflow-y-auto p-3">
           {/* STEP 1: PATIENT */}
           {step === 1 && (
-            <div className="space-y-5">
-              {/* Patient Mode Toggle */}
-              <div className="flex items-center p-1 bg-slate-100 rounded-full max-w-sm">
+            <div className="flex flex-col gap-3">
+              {/* Patient Mode Tabs */}
+              <div className="flex items-center">
                 <button
                   type="button"
                   onClick={() => {
                     setPatientMode('existing');
                     setErrorMessage('');
                   }}
-                  className={`flex-1 py-1.5 text-xs font-bold rounded-full transition-all cursor-pointer ${
+                  className={`h-7 px-4 text-[12px] font-bold rounded-l-sm border border-slate-300 transition-colors ${
                     patientMode === 'existing'
-                      ? 'bg-white text-slate-900 shadow-2xs'
-                      : 'text-slate-600 hover:text-slate-900'
+                      ? 'bg-[#5B46F6] text-white border-[#5B46F6]'
+                      : 'bg-white text-slate-600 hover:bg-slate-50 border-r-0'
                   }`}
                 >
                   Patient Existant
@@ -302,48 +339,50 @@ export const NewDossierWizard: React.FC<NewDossierWizardProps> = ({
                     setPatientMode('new');
                     setErrorMessage('');
                   }}
-                  className={`flex-1 py-1.5 text-xs font-bold rounded-full transition-all cursor-pointer ${
+                  className={`h-7 px-4 text-[12px] font-bold rounded-r-sm border border-slate-300 transition-colors ${
                     patientMode === 'new'
-                      ? 'bg-white text-slate-900 shadow-2xs'
-                      : 'text-slate-600 hover:text-slate-900'
+                      ? 'bg-[#5B46F6] text-white border-[#5B46F6]'
+                      : 'bg-white text-slate-600 hover:bg-slate-50'
                   }`}
                 >
-                  + Nouveau Patient
+                  Nouveau Patient
                 </button>
               </div>
 
               {patientMode === 'existing' ? (
-                <div className="space-y-3">
-                  <label className="block text-xs font-bold text-slate-700">
-                    Sélectionner le patient dans la base médicale :
-                  </label>
-                  <select
-                    value={selectedPatientId}
-                    onChange={(e) => setSelectedPatientId(e.target.value)}
-                    className="w-full bg-slate-50/80 border border-slate-200 focus:bg-white focus:border-[#6366F1] rounded-2xl px-3.5 py-2 text-xs font-bold text-slate-900 outline-none cursor-pointer"
-                  >
-                    {patients.map((p) => (
-                      <option key={p.id} value={p.id}>
-                        {p.nom} {p.prenom} — #{p.id} ({p.age} ans, {p.sexe === 'F' ? 'Femme' : 'Homme'})
-                      </option>
-                    ))}
-                  </select>
+                <div className="flex flex-col gap-3">
+                  <div>
+                    <label className="block text-[11px] font-semibold text-slate-700 mb-1">
+                      Sélectionner le patient :
+                    </label>
+                    <select
+                      value={selectedPatientId}
+                      onChange={(e) => setSelectedPatientId(e.target.value)}
+                      className="w-full h-7 bg-white border border-slate-300 focus:border-[#5B46F6] rounded-sm px-2 text-[12px] text-slate-900 outline-none cursor-pointer"
+                    >
+                      {patients.map((p) => (
+                        <option key={p.id} value={p.id}>
+                          {p.nom} {p.prenom} — #{p.id} ({p.age} ans)
+                        </option>
+                      ))}
+                    </select>
+                  </div>
 
                   {/* Summary card of chosen patient */}
                   {activePatient && (
-                    <div className="p-4 rounded-2xl bg-[#EEEDFC]/60 border border-[#D8D4FC] space-y-2 text-xs">
-                      <div className="font-extrabold text-slate-900 text-sm">
+                    <div className="border border-slate-300 border-l-[3px] border-l-blue-600 p-2 bg-white flex flex-col gap-0.5">
+                      <div className="font-bold text-slate-900 text-[12px]">
                         {activePatient.nom} {activePatient.prenom} (#{activePatient.id})
                       </div>
-                      <div className="text-slate-600">
-                        {activePatient.age} ans · Sexe : {activePatient.sexe === 'F' ? 'Féminin' : 'Masculin'} · Contact : {activePatient.telephone}
+                      <div className="text-slate-500 text-[11px]">
+                        {activePatient.age} ans · {activePatient.sexe === 'F' ? 'Féminin' : 'Masculin'} · {activePatient.telephone}
                       </div>
-                      <div className="text-slate-600">
-                        Prescripteur : <strong className="text-slate-800">{activePatient.prescripteur}</strong> ({activePatient.service})
+                      <div className="text-slate-600 text-[11px]">
+                        Prescripteur : {activePatient.prescripteur} ({activePatient.service})
                       </div>
                       {activePatient.renseignementsCliniques && (
-                        <div className="text-[11px] text-[#5B46F6] font-medium italic">
-                          Indication clinique : {activePatient.renseignementsCliniques}
+                        <div className="text-[11px] text-blue-700 italic mt-1">
+                          Indication : {activePatient.renseignementsCliniques}
                         </div>
                       )}
                     </div>
@@ -351,10 +390,10 @@ export const NewDossierWizard: React.FC<NewDossierWizardProps> = ({
                 </div>
               ) : (
                 /* New Patient Form Fields */
-                <div className="space-y-4">
+                <div className="flex flex-col gap-3">
                   <div className="grid grid-cols-2 gap-3">
                     <div>
-                      <label className="block text-xs font-bold text-slate-700 mb-1">
+                      <label className="block text-[11px] font-semibold text-slate-700 mb-1">
                         Nom de famille *
                       </label>
                       <input
@@ -365,12 +404,11 @@ export const NewDossierWizard: React.FC<NewDossierWizardProps> = ({
                           setNewPatientNom(e.target.value);
                           setErrorMessage('');
                         }}
-                        placeholder="Ex: KOUASSI"
-                        className="w-full bg-slate-50/80 border border-slate-200 focus:bg-white focus:border-[#6366F1] rounded-2xl px-3.5 py-2 text-xs text-slate-900 font-extrabold uppercase outline-none"
+                        className="w-full h-7 bg-white border border-slate-300 focus:border-[#5B46F6] rounded-sm px-2 text-[12px] text-slate-900 outline-none uppercase"
                       />
                     </div>
                     <div>
-                      <label className="block text-xs font-bold text-slate-700 mb-1">
+                      <label className="block text-[11px] font-semibold text-slate-700 mb-1">
                         Prénom(s) *
                       </label>
                       <input
@@ -381,90 +419,85 @@ export const NewDossierWizard: React.FC<NewDossierWizardProps> = ({
                           setNewPatientPrenom(e.target.value);
                           setErrorMessage('');
                         }}
-                        placeholder="Ex: Béranger"
-                        className="w-full bg-slate-50/80 border border-slate-200 focus:bg-white focus:border-[#6366F1] rounded-2xl px-3.5 py-2 text-xs text-slate-900 font-bold outline-none"
+                        className="w-full h-7 bg-white border border-slate-300 focus:border-[#5B46F6] rounded-sm px-2 text-[12px] text-slate-900 outline-none"
                       />
                     </div>
                   </div>
 
                   <div className="grid grid-cols-3 gap-3">
                     <div>
-                      <label className="block text-xs font-bold text-slate-700 mb-1">
+                      <label className="block text-[11px] font-semibold text-slate-700 mb-1">
                         Sexe *
                       </label>
                       <select
                         value={newPatientSexe}
                         onChange={(e) => setNewPatientSexe(e.target.value as any)}
-                        className="w-full bg-slate-50/80 border border-slate-200 rounded-2xl px-3 py-2 text-xs text-slate-900 outline-none cursor-pointer"
+                        className="w-full h-7 bg-white border border-slate-300 focus:border-[#5B46F6] rounded-sm px-2 text-[12px] text-slate-900 outline-none cursor-pointer"
                       >
-                        <option value="M">Masculin (M)</option>
-                        <option value="F">Féminin (F)</option>
+                        <option value="M">Masculin</option>
+                        <option value="F">Féminin</option>
                       </select>
                     </div>
 
                     <div>
-                      <label className="block text-xs font-bold text-slate-700 mb-1">
+                      <label className="block text-[11px] font-semibold text-slate-700 mb-1">
                         Âge (ans) *
                       </label>
                       <input
                         type="number"
                         value={newPatientAge}
                         onChange={(e) => setNewPatientAge(Number(e.target.value))}
-                        className="w-full bg-slate-50/80 border border-slate-200 focus:bg-white focus:border-[#6366F1] rounded-2xl px-3 py-2 text-xs text-slate-900 font-mono font-bold outline-none"
+                        className="w-full h-7 bg-white border border-slate-300 focus:border-[#5B46F6] rounded-sm px-2 text-[12px] font-mono text-slate-900 outline-none"
                       />
                     </div>
 
                     <div>
-                      <label className="block text-xs font-bold text-slate-700 mb-1">
+                      <label className="block text-[11px] font-semibold text-slate-700 mb-1">
                         Téléphone
                       </label>
                       <input
                         type="text"
                         value={newPatientPhone}
                         onChange={(e) => setNewPatientPhone(e.target.value)}
-                        placeholder="+225 07..."
-                        className="w-full bg-slate-50/80 border border-slate-200 focus:bg-white focus:border-[#6366F1] rounded-2xl px-3 py-2 text-xs font-mono text-slate-900 outline-none"
+                        className="w-full h-7 bg-white border border-slate-300 focus:border-[#5B46F6] rounded-sm px-2 text-[12px] font-mono text-slate-900 outline-none"
                       />
                     </div>
                   </div>
 
                   <div className="grid grid-cols-2 gap-3">
                     <div>
-                      <label className="block text-xs font-bold text-slate-700 mb-1">
+                      <label className="block text-[11px] font-semibold text-slate-700 mb-1">
                         Prescripteur référent
                       </label>
                       <input
                         type="text"
                         value={newPatientPrescripteur}
                         onChange={(e) => setNewPatientPrescripteur(e.target.value)}
-                        placeholder="Dr. Nom du médecin"
-                        className="w-full bg-slate-50/80 border border-slate-200 focus:bg-white focus:border-[#6366F1] rounded-2xl px-3.5 py-2 text-xs text-slate-900 outline-none"
+                        className="w-full h-7 bg-white border border-slate-300 focus:border-[#5B46F6] rounded-sm px-2 text-[12px] text-slate-900 outline-none"
                       />
                     </div>
                     <div>
-                      <label className="block text-xs font-bold text-slate-700 mb-1">
+                      <label className="block text-[11px] font-semibold text-slate-700 mb-1">
                         Service demandeur
                       </label>
                       <input
                         type="text"
                         value={newPatientService}
                         onChange={(e) => setNewPatientService(e.target.value)}
-                        placeholder="Maternité, Urgences..."
-                        className="w-full bg-slate-50/80 border border-slate-200 focus:bg-white focus:border-[#6366F1] rounded-2xl px-3.5 py-2 text-xs text-slate-900 outline-none"
+                        className="w-full h-7 bg-white border border-slate-300 focus:border-[#5B46F6] rounded-sm px-2 text-[12px] text-slate-900 outline-none"
                       />
                     </div>
                   </div>
 
                   <div>
-                    <label className="block text-xs font-bold text-slate-700 mb-1">
+                    <label className="block text-[11px] font-semibold text-slate-700 mb-1">
                       Renseignements Cliniques
                     </label>
                     <textarea
                       rows={2}
                       value={newPatientClinical}
                       onChange={(e) => setNewPatientClinical(e.target.value)}
-                      placeholder="Symptomatologie, suspicion clinique, motif de l'analyse..."
-                      className="w-full bg-slate-50/80 border border-slate-200 focus:bg-white focus:border-[#6366F1] rounded-2xl p-3 text-xs text-slate-900 outline-none"
+                      className="w-full bg-white border border-slate-300 focus:border-[#5B46F6] rounded-sm p-2 text-[12px] text-slate-900 outline-none"
                     />
                   </div>
                 </div>
@@ -474,29 +507,29 @@ export const NewDossierWizard: React.FC<NewDossierWizardProps> = ({
 
           {/* STEP 2: EXAMS & PACKS */}
           {step === 2 && (
-            <div className="space-y-5">
+            <div className="flex flex-col gap-3">
               {/* Pre-analytical parameters (Sample & Automate) */}
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 p-3.5 bg-slate-50 rounded-2xl border border-slate-200">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 p-3 bg-slate-50 border border-slate-200 rounded-sm">
                 <div>
-                  <label className="block text-[11px] font-bold text-slate-600 mb-1">
+                  <label className="block text-[11px] font-semibold text-slate-700 mb-1">
                     Date de Prélèvement
                   </label>
                   <input
                     type="date"
                     value={dossierDate}
                     onChange={(e) => setDossierDate(e.target.value)}
-                    className="w-full bg-white border border-slate-200 rounded-xl px-2.5 py-1.5 text-xs text-slate-900 outline-none"
+                    className="w-full h-7 bg-white border border-slate-300 focus:border-[#5B46F6] rounded-sm px-2 text-[12px] text-slate-900 outline-none"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-[11px] font-bold text-slate-600 mb-1">
+                  <label className="block text-[11px] font-semibold text-slate-700 mb-1">
                     Type d'Échantillon *
                   </label>
                   <select
                     value={sampleType}
                     onChange={(e) => setSampleType(e.target.value)}
-                    className="w-full bg-white border border-slate-200 rounded-xl px-2.5 py-1.5 text-xs text-slate-900 outline-none cursor-pointer"
+                    className="w-full h-7 bg-white border border-slate-300 focus:border-[#5B46F6] rounded-sm px-2 text-[12px] text-slate-900 outline-none cursor-pointer"
                   >
                     <option value="Sang total EDTA">Sang total EDTA</option>
                     <option value="Sérum">Sérum</option>
@@ -508,66 +541,41 @@ export const NewDossierWizard: React.FC<NewDossierWizardProps> = ({
                   </select>
                 </div>
 
-                <div>
-                  <label className="block text-[11px] font-bold text-slate-600 mb-1">
-                    Automate Associé
-                  </label>
-                  <select
-                    value={automateType}
-                    onChange={(e) => setAutomateType(e.target.value)}
-                    className="w-full bg-white border border-slate-200 rounded-xl px-2.5 py-1.5 text-xs text-slate-900 outline-none cursor-pointer"
-                  >
-                    <option value="Mindray BC-30s">Mindray BC-30s</option>
-                    <option value="Sysmex XN-L 550">Sysmex XN-L 550</option>
-                    <option value="Selectra ProM Clinical Chemistry">Selectra ProM</option>
-                    <option value="Interlab G26 / Densitomètre">Interlab G26</option>
-                    <option value="Méthode manuelle / Microscopie">Méthode manuelle</option>
-                  </select>
-                </div>
               </div>
 
               {/* Quick Packs Selector Buttons */}
               <div>
-                <label className="block text-xs font-bold text-slate-700 mb-2">
+                <label className="block text-[11px] font-semibold text-slate-700 mb-1">
                   Sélection Rapide par Pack Clinique :
                 </label>
-                <div className="grid grid-cols-3 gap-2.5">
+                <div className="grid grid-cols-3 gap-2">
                   <button
                     type="button"
                     onClick={() => handleApplyPack('PACK_BPN')}
-                    className="p-3 rounded-2xl border border-purple-200 bg-purple-50/70 hover:bg-purple-100/70 text-left transition-colors cursor-pointer"
+                    className="p-2 bg-rose-600 hover:bg-rose-700 text-center cursor-pointer rounded-full shadow-sm transition-colors border-none smooth-press"
                   >
-                    <div className="text-xs font-bold text-purple-900">
+                    <div className="text-[12px] font-bold text-white">
                       Pack BPN Maternité
-                    </div>
-                    <div className="text-[10px] text-purple-700">
-                      7 examens prénataux
                     </div>
                   </button>
 
                   <button
                     type="button"
                     onClick={() => handleApplyPack('BILAN_METABOLIQUE')}
-                    className="p-3 rounded-2xl border border-blue-200 bg-blue-50/70 hover:bg-blue-100/70 text-left transition-colors cursor-pointer"
+                    className="p-2 bg-blue-600 hover:bg-blue-700 text-center cursor-pointer rounded-full shadow-sm transition-colors border-none smooth-press"
                   >
-                    <div className="text-xs font-bold text-blue-900">
+                    <div className="text-[12px] font-bold text-white">
                       Bilan Métabolique
-                    </div>
-                    <div className="text-[10px] text-blue-700">
-                      Diabète, Rein, Lipides
                     </div>
                   </button>
 
                   <button
                     type="button"
                     onClick={() => handleApplyPack('BILAN_PEDIATRIQUE')}
-                    className="p-3 rounded-2xl border border-emerald-200 bg-emerald-50/70 hover:bg-emerald-100/70 text-left transition-colors cursor-pointer"
+                    className="p-2 bg-emerald-600 hover:bg-emerald-700 text-center cursor-pointer rounded-full shadow-sm transition-colors border-none smooth-press"
                   >
-                    <div className="text-xs font-bold text-emerald-900">
+                    <div className="text-[12px] font-bold text-white">
                       Bilan Pédiatrique BPS
-                    </div>
-                    <div className="text-[10px] text-emerald-700">
-                      NFS, Palu, Drépano
                     </div>
                   </button>
                 </div>
@@ -575,42 +583,38 @@ export const NewDossierWizard: React.FC<NewDossierWizardProps> = ({
 
               {/* Individual Exams Selector */}
               <div>
-                <div className="flex items-center justify-between mb-2">
-                  <label className="text-xs font-bold text-slate-700">
-                    Sélection Personnalisée ({selectedExamIds.length} examens retenus) :
+                <div className="flex items-center justify-between mb-1">
+                  <label className="text-[11px] font-semibold text-slate-700">
+                    Sélection Personnalisée ({selectedExamIds.length} retenus) :
                   </label>
-                  <div className="w-56 relative">
-                    <Search className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-1/2 -translate-y-1/2" />
+                  <div className="relative w-48">
                     <input
                       type="text"
                       value={examSearch}
                       onChange={(e) => setExamSearch(e.target.value)}
-                      placeholder="Filtrer examen..."
-                      className="w-full pl-7 pr-2.5 py-1 bg-slate-50 border border-slate-200 rounded-full text-xs outline-none"
+                      placeholder="Filtrer..."
+                      className="w-full h-7 bg-white border border-slate-300 focus:border-[#5B46F6] rounded-sm px-2 text-[11px] outline-none"
                     />
                   </div>
                 </div>
 
-                <div className="max-h-60 overflow-y-auto border border-slate-200 rounded-2xl p-2 divide-y divide-slate-100 bg-white">
-                  {catalog
-                    .filter((e) =>
-                      e.name.toLowerCase().includes(examSearch.toLowerCase()) ||
-                      e.category.toLowerCase().includes(examSearch.toLowerCase())
-                    )
-                    .map((exam) => {
-                      const isSelected = selectedExamIds.includes(exam.id);
-                      return (
-                        <label
-                          key={exam.id}
-                          className="flex items-center justify-between p-2.5 hover:bg-slate-50 rounded-xl cursor-pointer transition-colors"
-                        >
-                          <div className="flex items-center gap-3">
-                            <input
-                              type="checkbox"
-                              checked={isSelected}
-                              onChange={(e) => {
+                <div className="h-48 overflow-y-auto border border-slate-300 rounded-sm bg-white">
+                  <table className="w-full text-left border-collapse text-[12px]">
+                    <tbody>
+                      {catalog
+                        .filter((e) =>
+                          e.name.toLowerCase().includes(examSearch.toLowerCase()) ||
+                          e.category.toLowerCase().includes(examSearch.toLowerCase())
+                        )
+                        .map((exam) => {
+                          const isSelected = selectedExamIds.includes(exam.id);
+                          return (
+                            <tr
+                              key={exam.id}
+                              className="border-b border-slate-200 hover:bg-slate-50 cursor-pointer"
+                              onClick={() => {
                                 setErrorMessage('');
-                                if (e.target.checked) {
+                                if (!isSelected) {
                                   setSelectedExamIds((prev) => [...prev, exam.id]);
                                 } else {
                                   setSelectedExamIds((prev) =>
@@ -618,23 +622,26 @@ export const NewDossierWizard: React.FC<NewDossierWizardProps> = ({
                                   );
                                 }
                               }}
-                              className="w-4 h-4 text-[#5B46F6] rounded border-slate-300 focus:ring-[#5B46F6] cursor-pointer"
-                            />
-                            <div>
-                              <div className="text-xs font-bold text-slate-900">
+                            >
+                              <td className="w-8 px-2 py-1 text-center border-r border-slate-200">
+                                <input
+                                  type="checkbox"
+                                  checked={isSelected}
+                                  readOnly
+                                  className="w-[12px] h-[12px] text-[#5B46F6] border-slate-300 rounded-sm cursor-pointer"
+                                />
+                              </td>
+                              <td className="px-2 py-1 font-bold text-slate-800 border-r border-slate-200">
                                 {exam.name}
-                              </div>
-                              <div className="text-[11px] text-slate-400">
-                                {exam.category} · {exam.sampleTypeDefault}
-                              </div>
-                            </div>
-                          </div>
-                          <span className="text-xs font-mono font-bold text-slate-700">
-                            {exam.price} FCFA
-                          </span>
-                        </label>
-                      );
-                    })}
+                              </td>
+                              <td className="px-2 py-1 text-[11px] text-slate-500 border-r border-slate-200">
+                                {exam.category}
+                              </td>
+                            </tr>
+                          );
+                        })}
+                    </tbody>
+                  </table>
                 </div>
               </div>
             </div>
@@ -642,231 +649,104 @@ export const NewDossierWizard: React.FC<NewDossierWizardProps> = ({
 
           {/* STEP 3: RESULTS ENTRY */}
           {step === 3 && (
-            <div className="space-y-6">
-              <div className="p-3.5 bg-[#EEEDFC]/60 border border-[#D8D4FC] rounded-2xl text-xs text-[#5B46F6] flex items-center justify-between">
+            <div className="flex flex-col gap-3 pb-2">
+              <div className="flex items-center justify-between h-6 px-2 bg-slate-100 border border-slate-300 rounded-sm text-[11px] text-slate-700 font-semibold">
                 <span>
-                  Saisie clinique pour <strong>{activePatient.nom} {activePatient.prenom}</strong> (#{activePatient.id})
+                  Saisie pour {activePatient.nom} {activePatient.prenom}
                 </span>
                 <button
                   type="button"
                   onClick={handleAutoInterpret}
-                  className="flex items-center gap-1.5 bg-white border border-[#D8D4FC] px-3 py-1.5 rounded-full text-xs font-bold text-[#5B46F6] hover:bg-[#EEEDFC] cursor-pointer shadow-2xs"
+                  className="flex items-center gap-1 hover:text-blue-600 transition-colors cursor-pointer"
                 >
-                  <Sparkles className="w-3.5 h-3.5 text-[#5B46F6]" />
-                  <span>Auto-interprétation clinique</span>
+                  <Sparkles className="w-3 h-3" /> Auto-interprétation
                 </button>
               </div>
 
               {selectedExamIds.map((examId) => {
                 const exam = catalog.find((e) => e.id === examId);
                 if (!exam) return null;
-
-                const isGoutteEpaisse = exam.id === 'EXM-GOUTTE-EPAISSE';
+                const theme = getExamStyles(exam.id);
 
                 return (
-                  <div
+                  <ResultGrid
                     key={exam.id}
-                    className={`border rounded-2xl overflow-hidden shadow-xs ${
-                      isGoutteEpaisse
-                        ? 'border-purple-300 ring-1 ring-purple-100 bg-purple-50/10'
-                        : 'border-slate-200 bg-white'
-                    }`}
-                  >
-                    <div
-                      className={`px-4 py-2.5 border-b flex items-center justify-between ${
-                        isGoutteEpaisse
-                          ? 'bg-purple-100/70 border-purple-200 text-purple-950 font-bold'
-                          : 'bg-slate-50 border-slate-200 text-slate-900 font-bold'
-                      }`}
-                    >
-                      <div className="text-xs uppercase tracking-wide">
-                        {exam.name}
-                      </div>
-                      <span className="text-[11px] text-slate-500 font-mono">
-                        {exam.sampleTypeDefault}
-                      </span>
-                    </div>
-
-                    {exam.sections.map((section, sIdx) => (
-                      <div key={sIdx} className="p-4 space-y-3">
-                        {section.title && (
-                          <h5 className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
-                            {section.title}
-                          </h5>
-                        )}
-
-                        <div className="divide-y divide-slate-100">
-                          {section.parameters.map((param) => {
-                            const val = resultsData[param.id] ?? '';
-                            const ref = getEffectiveReference(param, activePatient);
-                            const evalRes = evaluateParameterValue(val, param, activePatient);
-
-                            const isDensityField = param.id === 'GE_DENSITE';
-                            const isResultField = param.id === 'GE_RESULTAT';
-                            const isObsField = param.id === 'GE_OBS';
-
-                            return (
-                              <div
-                                key={param.id}
-                                className={`py-2.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs ${
-                                  isObsField ? 'bg-purple-50/80 p-3 rounded-2xl border border-purple-200 my-2' : ''
-                                }`}
-                              >
-                                <div className="sm:w-1/3">
-                                  <span
-                                    className={`font-semibold ${
-                                      isDensityField || isResultField
-                                        ? 'font-bold text-purple-900 text-sm'
-                                        : 'text-slate-800'
-                                    }`}
-                                  >
-                                    {param.name}
-                                  </span>
-                                  {param.unit && (
-                                    <span className="text-slate-400 ml-1 font-mono text-[11px]">
-                                      ({param.unit})
-                                    </span>
-                                  )}
-                                </div>
-
-                                <div className="sm:w-1/3">
-                                  {param.type === 'select' ? (
-                                    <select
-                                      value={val}
-                                      onChange={(e) => handleResultChange(param.id, e.target.value)}
-                                      className={`w-full border rounded-xl px-2.5 py-1.5 text-xs outline-none cursor-pointer ${
-                                        isResultField
-                                          ? 'border-purple-300 font-bold bg-white text-purple-950 focus:border-purple-600'
-                                          : 'border-slate-300 bg-slate-50 focus:bg-white text-slate-800 focus:border-[#6366F1]'
-                                      }`}
-                                    >
-                                      {param.options?.map((opt) => (
-                                        <option key={opt} value={opt}>
-                                          {opt}
-                                        </option>
-                                      ))}
-                                    </select>
-                                  ) : param.type === 'textarea' ? (
-                                    <textarea
-                                      rows={2}
-                                      value={val}
-                                      onChange={(e) => handleResultChange(param.id, e.target.value)}
-                                      placeholder="Commentaire d'observation..."
-                                      className="w-full bg-white border border-purple-300 focus:border-purple-600 rounded-xl p-2.5 text-xs text-slate-900 outline-none"
-                                    />
-                                  ) : (
-                                    <input
-                                      type="number"
-                                      step="any"
-                                      value={val}
-                                      onChange={(e) => handleResultChange(param.id, e.target.value)}
-                                      placeholder="Valeur..."
-                                      className={`w-full border rounded-xl px-3 py-1.5 text-xs font-mono outline-none ${
-                                        isDensityField
-                                          ? 'border-purple-400 bg-purple-50 text-purple-800 font-extrabold text-sm focus:border-purple-600'
-                                          : 'border-slate-300 bg-slate-50 focus:bg-white text-slate-900 font-bold focus:border-[#6366F1]'
-                                      }`}
-                                    />
-                                  )}
-                                </div>
-
-                                <div className="sm:w-1/3 flex items-center justify-between sm:justify-end gap-3 text-right">
-                                  <div className="text-[11px] text-slate-500 font-mono">
-                                    {ref?.min !== undefined && ref?.max !== undefined
-                                      ? `${ref.min} – ${ref.max}`
-                                      : ref?.expected || ref?.text || '—'}
-                                  </div>
-                                  <span className={`text-xs ${evalRes.color} min-w-16 text-center`}>
-                                    {evalRes.label}
-                                  </span>
-                                </div>
-                              </div>
-                            );
-                          })}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
+                    exam={exam}
+                    resultsData={resultsData}
+                    activePatient={activePatient}
+                    theme={theme}
+                    onResultChange={handleResultChange}
+                    automate={examAutomates[exam.id]}
+                    onAutomateChange={(val) => setExamAutomates(prev => ({ ...prev, [exam.id]: val }))}
+                  />
                 );
               })}
 
-              {/* General Biological Observations */}
-              <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-2">
-                <label className="block text-xs font-bold text-slate-800">
-                  Observations Générales & Conclusions du Biologiste
-                </label>
-                <textarea
-                  rows={3}
-                  value={observations}
-                  onChange={(e) => setObservations(e.target.value)}
-                  placeholder="Conclusions diagnostiques, conseils thérapeutiques ou mention de conformité ISO 15189..."
-                  className="w-full bg-white border border-slate-200 rounded-xl p-3 text-xs text-slate-900 outline-none focus:border-[#6366F1]"
-                />
-              </div>
+
             </div>
           )}
         </div>
 
         {/* Modal Footer Controls */}
-        <div className="px-6 py-4 border-t border-slate-100 bg-slate-50/60 flex items-center justify-between">
+        <div className="p-3 border-t border-slate-300 bg-slate-50 flex items-center justify-between">
           <div>
             {step > 1 && (
-              <button
-                type="button"
-                onClick={() => {
-                  setStep((s) => (s - 1) as any);
-                  setErrorMessage('');
-                }}
-                className="flex items-center gap-1.5 px-4 py-2 text-xs font-bold text-slate-600 hover:text-slate-900 rounded-full hover:bg-slate-100 transition-colors cursor-pointer"
-              >
-                <ArrowLeft className="w-4 h-4" />
-                <span>Précédent</span>
-              </button>
-            )}
-          </div>
-
-          <div className="flex items-center gap-2.5">
-            {step < 3 ? (
-              <button
-                type="button"
-                onClick={() => {
-                  if (step === 1 && patientMode === 'new' && (!newPatientNom.trim() || !newPatientPrenom.trim())) {
-                    setErrorMessage('Veuillez renseigner le nom et le prénom du patient.');
-                    return;
-                  }
-                  if (step === 2 && selectedExamIds.length === 0) {
-                    setErrorMessage('Veuillez sélectionner au moins un examen à analyser.');
-                    return;
-                  }
-                  setErrorMessage('');
-                  setStep((s) => (s + 1) as any);
-                }}
-                className="flex items-center gap-2 px-5 py-2.5 bg-[#18181B] hover:bg-[#27272A] text-white rounded-full text-xs font-bold shadow-md shadow-slate-900/10 hover:shadow-lg transition-all cursor-pointer active:scale-95"
-              >
-                <span>Continuer</span>
-                <ArrowRight className="w-4 h-4" />
-              </button>
-            ) : (
-              <>
                 <button
                   type="button"
-                  onClick={() => handleFinalSubmit(false)}
-                  className="flex items-center gap-1.5 px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-white rounded-full text-xs font-bold shadow-xs transition-colors cursor-pointer"
+                  onClick={() => {
+                    setStep((s) => (s - 1) as any);
+                    setErrorMessage('');
+                  }}
+                  className="flex items-center gap-1 h-8 px-4 border border-slate-300 text-[12px] font-bold text-slate-700 hover:bg-slate-100 rounded-full transition-colors cursor-pointer shadow-sm"
                 >
-                  <Save className="w-3.5 h-3.5" />
-                  <span>Enregistrer seul</span>
+                  <ChevronLeft className="w-4 h-4" />
+                  <span>Précédent</span>
                 </button>
-
+              )}
+            </div>
+  
+            <div className="flex items-center gap-2">
+              {step < 3 ? (
                 <button
                   type="button"
-                  onClick={() => handleFinalSubmit(true)}
-                  className="flex items-center gap-2 px-5 py-2.5 bg-[#10B981] hover:bg-[#059669] text-white rounded-full text-xs font-bold shadow-md shadow-emerald-600/20 transition-all cursor-pointer active:scale-95"
+                  onClick={() => {
+                    if (step === 1 && patientMode === 'new' && (!newPatientNom.trim() || !newPatientPrenom.trim())) {
+                      setErrorMessage('Veuillez renseigner le nom et le prénom du patient.');
+                      return;
+                    }
+                    if (step === 2 && selectedExamIds.length === 0) {
+                      setErrorMessage('Veuillez sélectionner au moins un examen à analyser.');
+                      return;
+                    }
+                    setErrorMessage('');
+                    setStep((s) => (s + 1) as any);
+                  }}
+                  className="flex items-center gap-1 h-8 px-4 bg-blue-600 text-white text-[12px] font-bold rounded-full hover:bg-blue-700 transition-colors cursor-pointer shadow-sm"
                 >
-                  <Printer className="w-3.5 h-3.5" />
-                  <span>Enregistrer & Imprimer</span>
+                  <span>Continuer</span>
+                  <ChevronRight className="w-4 h-4" />
                 </button>
-              </>
-            )}
+              ) : (
+                <>
+                  <button
+                    type="button"
+                    onClick={() => handleFinalSubmit(false)}
+                    className="flex items-center gap-1.5 h-8 px-4 bg-emerald-600 text-white text-[12px] font-bold rounded-full hover:bg-emerald-700 transition-colors cursor-pointer shadow-sm"
+                  >
+                    <Save className="w-4 h-4" />
+                    <span>Enregistrer seul</span>
+                  </button>
+  
+                  <button
+                    type="button"
+                    onClick={() => handleFinalSubmit(true)}
+                    className="flex items-center gap-1.5 h-8 px-4 bg-blue-600 text-white text-[12px] font-bold rounded-full hover:bg-blue-700 transition-colors cursor-pointer shadow-sm"
+                  >
+                    <Printer className="w-4 h-4" />
+                    <span>Enregistrer & Imprimer</span>
+                  </button>
+                </>
+              )}
           </div>
         </div>
       </div>

@@ -345,7 +345,7 @@ export const AnatomyView: React.FC<AnatomyViewProps> = ({
           </div>
 
           {/* Bottom Stage Status Capsule */}
-          <div className="w-full mt-3 bg-slate-900 text-white p-3 rounded-2xl text-xs space-y-1">
+          <div className="w-full mt-3 bg-[#5832E5] text-white p-3 rounded-2xl text-xs space-y-1">
             <div className="flex items-center gap-2 font-bold text-emerald-400">
               <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
               <span>{activeOrganFocus}</span>
@@ -510,7 +510,7 @@ export const AnatomyView: React.FC<AnatomyViewProps> = ({
                 <Printer className="w-4 h-4 text-red-500" />
                 <span>Imprimer Bilan Prénatal & NFS</span>
               </div>
-              <span className="bg-slate-900 text-white text-[10px] font-extrabold px-2.5 py-1 rounded-lg">
+              <span className="bg-[#5832E5] text-white text-[10px] font-extrabold px-2.5 py-1 rounded-lg">
                 A4 PORTRAIT
               </span>
             </button>

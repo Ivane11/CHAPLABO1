@@ -24,6 +24,7 @@ interface LandingPageViewProps {
   onNavigate: (view: any) => void;
   onOpenNewDossier: () => void;
   onOpenNewPatient: () => void;
+  onOpenLogin: () => void;
   patientsCount: number;
   dossiersCount: number;
   pendingCount: number;
@@ -34,6 +35,7 @@ export const LandingPageView: React.FC<LandingPageViewProps> = ({
   onNavigate,
   onOpenNewDossier,
   onOpenNewPatient,
+  onOpenLogin,
   patientsCount,
   dossiersCount,
   pendingCount,
@@ -41,298 +43,277 @@ export const LandingPageView: React.FC<LandingPageViewProps> = ({
   return (
     <div className="space-y-10 pb-16">
       {/* Hero Showcase Section with Glassmorphism and Color Accents */}
-      <div className="relative rounded-[32px] overflow-hidden bg-gradient-to-br from-white via-[#F8F9FD] to-[#EEEDFC] border border-slate-200/90 shadow-lg shadow-indigo-500/5 p-8 sm:p-12 lg:p-16">
+      <div className="relative rounded-[40px] overflow-hidden bg-white/40 border border-white/60 shadow-xl shadow-[#6941C6]/5 p-8 sm:p-12 lg:p-16 backdrop-blur-3xl">
         {/* Soft Ambient Glows */}
-        <div className="absolute top-0 right-0 w-96 h-96 bg-[#818CF8]/15 rounded-full blur-3xl pointer-events-none -mr-20 -mt-20"></div>
-        <div className="absolute bottom-0 left-1/3 w-80 h-80 bg-[#34D399]/15 rounded-full blur-3xl pointer-events-none"></div>
+        <div className="absolute top-0 right-0 w-96 h-96 bg-[#6941C6]/10 rounded-full blur-3xl pointer-events-none -mr-20 -mt-20"></div>
+        <div className="absolute bottom-0 left-1/3 w-80 h-80 bg-[#059669]/10 rounded-full blur-3xl pointer-events-none"></div>
+        <div className="absolute top-1/2 left-10 w-72 h-72 bg-blue-400/10 rounded-full blur-3xl pointer-events-none"></div>
 
-        <div className="relative z-10 max-w-4xl space-y-6">
-          {/* Top Tag */}
-          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/90 border border-[#D8D4FC] text-[#5B46F6] text-xs font-extrabold shadow-2xs backdrop-blur-md">
-            <Sparkles className="w-4 h-4 text-[#5B46F6]" />
-            <span className="tracking-wide uppercase font-sans">
-              SYSTÈME DE LABORATOIRE CLINIQUE DE NOUVELLE GÉNÉRATION
-            </span>
+        <style>{`
+          @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-15px); }
+          }
+          .animate-float {
+            animation: float 5s ease-in-out infinite;
+          }
+        `}</style>
+
+        <div className="relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+          <div className="lg:col-span-7 space-y-6">
+            {/* Top Tag */}
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/80 border border-white/60 text-[#6941C6] text-[11px] font-extrabold shadow-sm backdrop-blur-md">
+              <Sparkles className="w-4 h-4 text-[#6941C6]" />
+              <span className="tracking-wider uppercase font-sans">
+                SYSTÈME DE LABORATOIRE CLINIQUE DE NOUVELLE GÉNÉRATION
+              </span>
+            </div>
+  
+            <h1 className="text-4xl sm:text-5xl lg:text-7xl font-black text-slate-900 tracking-tight leading-[1.05] font-sans">
+              L'Excellence Diagnostique au Service de{' '}
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#6941C6] via-[#8B5CF6] to-[#059669] bg-[length:200%_auto] animate-[text-shimmer_4s_ease-in-out_infinite]">
+                Votre Centre de Santé
+              </span>
+              .
+            </h1>
+  
+            {/* Subtitle */}
+            <p className="text-base sm:text-xl text-slate-600 leading-relaxed max-w-2xl font-medium">
+              Conçu pour les cliniques et centres de santé modernes : gestion intégrée des dossiers biologiques, suivi précis des résultats, goutte épaisse haute sensibilité et édition de bulletins professionnels et clairs.
+            </p>
+  
+            <div className="relative z-50 flex flex-wrap items-center gap-4 pt-8 pb-12">
+              <button
+                type="button"
+                onClick={onOpenLogin}
+                className="flex items-center gap-2.5 px-7 py-4 rounded-full bg-[#5832E5] hover:bg-[#4623C2] text-white text-[15px] font-bold shadow-lg shadow-[#5832E5]/20 hover:shadow-xl transition-all cursor-pointer group"
+              >
+                <span>Accéder à l'espace membre</span>
+                <ArrowRight className="w-5 h-5 group-hover:translate-x-1.5 transition-transform" />
+              </button>
+            </div>
           </div>
 
-          {/* Main Title */}
-          <h1 className="text-3xl sm:text-5xl lg:text-6xl font-black text-slate-900 tracking-tight leading-[1.1] font-sans">
-            L'Excellence Diagnostique au Service de{' '}
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#5B46F6] via-[#6366F1] to-[#10B981]">
-              Votre Centre de Santé
-            </span>
-            .
-          </h1>
-
-          {/* Subtitle */}
-          <p className="text-base sm:text-lg text-slate-600 leading-relaxed max-w-2xl font-normal">
-            Conçu pour les cliniques et laboratoires modernes : gestion intégrée des dossiers biologiques, automatisation des analyseurs Mindray & Sysmex, goutte épaisse haute sensibilité et bulletins de résultats imprimables certifiés ISO 15189.
-          </p>
-
-          {/* Action CTAs */}
-          <div className="flex flex-wrap items-center gap-3 pt-2">
-            <button
-              onClick={() => onNavigate('dashboard')}
-              className="flex items-center gap-2.5 px-6 py-3.5 rounded-full bg-[#18181B] hover:bg-[#27272A] text-white text-sm font-bold shadow-lg shadow-slate-900/15 hover:shadow-xl transition-all cursor-pointer active:scale-95 group"
-            >
-              <span>Ouvrir le Tableau de Bord</span>
-              <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-            </button>
-
-            <button
-              onClick={onOpenNewDossier}
-              className="flex items-center gap-2 px-5 py-3.5 rounded-full bg-white hover:bg-slate-50 border border-slate-300 text-slate-800 text-sm font-bold transition-all shadow-xs hover:shadow-sm cursor-pointer"
-            >
-              <TestTubes className="w-4 h-4 text-[#5B46F6]" />
-              <span>+ Nouveau Dossier Patient</span>
-            </button>
-
-            <button
-              onClick={() => onNavigate('reports')}
-              className="flex items-center gap-2 px-5 py-3.5 rounded-full bg-[#EEEDFC] hover:bg-[#E2E0FB] border border-[#D8D4FC] text-[#5B46F6] text-sm font-bold transition-all shadow-xs cursor-pointer"
-            >
-              <Printer className="w-4 h-4" />
-              <span>Édition des Bulletins ISO</span>
-            </button>
+          <div className="lg:col-span-5 hidden lg:flex justify-center items-center relative">
+            <div className="absolute inset-0 bg-gradient-to-br from-[#6941C6]/10 to-[#059669]/10 rounded-full blur-3xl animate-pulse"></div>
+            <img 
+              src="/Doctors-amico.svg" 
+              alt="Medical Team" 
+              className="w-full max-w-[450px] h-auto object-contain relative z-10 animate-float"
+            />
           </div>
+        </div>
 
-          {/* Live Quick Stats Strip */}
-          <div className="pt-6 border-t border-slate-200/80 grid grid-cols-2 sm:grid-cols-4 gap-4">
-            <div className="bg-white/80 backdrop-blur-md p-3.5 rounded-2xl border border-slate-200/80 shadow-2xs">
-              <div className="text-xs text-slate-400 font-bold uppercase tracking-wider">
+          <div className="pt-10 border-t border-slate-200/60 grid grid-cols-2 sm:grid-cols-4 gap-4">
+            <div className="bg-white/60 backdrop-blur-xl p-5 rounded-[24px] border border-white/60 shadow-sm">
+              <div className="text-[11px] text-slate-500 font-bold uppercase tracking-widest">
                 Patients Actifs
               </div>
-              <div className="text-2xl font-black text-slate-900 mt-1 font-mono">
+              <div className="text-3xl font-black text-slate-900 mt-1 font-mono">
                 {patientsCount}
               </div>
-              <div className="text-[10px] text-emerald-600 font-semibold flex items-center gap-1 mt-0.5">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+              <div className="text-[11px] text-[#059669] font-bold flex items-center gap-1.5 mt-1">
+                <span className="w-1.5 h-1.5 rounded-full bg-[#059669]"></span>
                 Dossiers sécurisés
               </div>
             </div>
 
-            <div className="bg-white/80 backdrop-blur-md p-3.5 rounded-2xl border border-slate-200/80 shadow-2xs">
-              <div className="text-xs text-slate-400 font-bold uppercase tracking-wider">
+            <div className="bg-white/60 backdrop-blur-xl p-5 rounded-[24px] border border-white/60 shadow-sm">
+              <div className="text-[11px] text-slate-500 font-bold uppercase tracking-widest">
                 Dossiers Réalisés
               </div>
-              <div className="text-2xl font-black text-slate-900 mt-1 font-mono">
+              <div className="text-3xl font-black text-slate-900 mt-1 font-mono">
                 {dossiersCount}
               </div>
-              <div className="text-[10px] text-[#5B46F6] font-semibold flex items-center gap-1 mt-0.5">
-                <FileCheck2 className="w-3 h-3" />
+              <div className="text-[11px] text-[#6941C6] font-bold flex items-center gap-1.5 mt-1">
+                <FileCheck2 className="w-3.5 h-3.5" />
                 Analyses complètes
               </div>
             </div>
 
-            <div className="bg-[#ECEAFE] p-3.5 rounded-2xl border border-[#D8D4FC] shadow-2xs">
-              <div className="text-xs text-[#5B46F6] font-bold uppercase tracking-wider">
-                À Valider Biologiste
-              </div>
-              <div className="text-2xl font-black text-[#5B46F6] mt-1 font-mono">
-                {pendingCount}
-              </div>
-              <div className="text-[10px] text-[#5B46F6] font-semibold flex items-center gap-1 mt-0.5">
-                <ShieldCheck className="w-3 h-3" />
-                Priorité ISO 15189
+            <div className="bg-[#F2EEFF]/80 backdrop-blur-xl p-5 rounded-[24px] border border-[#EAE4FF] shadow-sm relative overflow-hidden">
+              <div className="absolute top-0 right-0 w-24 h-24 bg-white/40 blur-xl rounded-full"></div>
+              <div className="relative z-10">
+                <div className="text-[11px] text-[#6941C6] font-bold uppercase tracking-widest">
+                  À Valider Biologiste
+                </div>
+                <div className="text-3xl font-black text-[#6941C6] mt-1 font-mono">
+                  {pendingCount}
+                </div>
+                <div className="text-[11px] text-[#6941C6] font-bold flex items-center gap-1.5 mt-1">
+                  <ShieldCheck className="w-3.5 h-3.5" />
+                  Priorité d'analyse
+                </div>
               </div>
             </div>
 
-            <div className="bg-white/80 backdrop-blur-md p-3.5 rounded-2xl border border-slate-200/80 shadow-2xs">
-              <div className="text-xs text-slate-400 font-bold uppercase tracking-wider">
-                Automates Liés
+            <div className="bg-white/60 backdrop-blur-xl p-5 rounded-[24px] border border-white/60 shadow-sm">
+              <div className="text-[11px] text-slate-500 font-bold uppercase tracking-widest">
+                Catalogue d'Analyses
               </div>
-              <div className="text-2xl font-black text-slate-900 mt-1 font-mono">
-                4 / 4
+              <div className="text-3xl font-black text-slate-900 mt-1 font-mono">
+                80+
               </div>
-              <div className="text-[10px] text-emerald-600 font-semibold flex items-center gap-1 mt-0.5">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-                Mindray & Roche connectés
+              <div className="text-[11px] text-[#059669] font-bold flex items-center gap-1.5 mt-1">
+                <span className="w-1.5 h-1.5 rounded-full bg-[#059669]"></span>
+                Examens disponibles
               </div>
             </div>
           </div>
         </div>
-      </div>
+
 
       {/* Feature Showcase Grid: 6 Pillars */}
       <div>
-        <div className="text-center max-w-2xl mx-auto space-y-2 mb-8">
-          <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight font-sans">
+        <div className="text-center max-w-2xl mx-auto space-y-3 mb-10">
+          <h2 className="text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight font-sans">
             Une Plateforme Complète, Fluide et Modulaire
           </h2>
-          <p className="text-xs sm:text-sm text-slate-500">
+          <p className="text-sm sm:text-base text-slate-500 font-medium">
             Tous les outils nécessaires pour transformer votre centre médical en référence diagnostique accréditée.
           </p>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {/* Card 1: Goutte Épaisse & Paludisme */}
-          <div className="bg-white rounded-3xl p-6 border border-slate-200/80 shadow-xs hover:shadow-md hover:border-purple-300 transition-all group flex flex-col justify-between">
-            <div className="space-y-3">
-              <div className="w-12 h-12 rounded-2xl bg-purple-50 text-purple-700 flex items-center justify-center font-bold">
-                <TestTubes className="w-6 h-6" />
+          <div className="glass-panel rounded-[32px] p-7 border border-white/60 shadow-sm hover:shadow-xl hover:border-[#6941C6]/30 transition-all group flex flex-col justify-between cursor-pointer" onClick={() => onNavigate('exams')}>
+            <div className="space-y-4">
+              <div className="w-14 h-14 rounded-[20px] bg-purple-50/80 border border-purple-100 text-[#6941C6] flex items-center justify-center font-bold">
+                <TestTubes className="w-7 h-7" />
               </div>
-              <h3 className="text-base font-bold text-slate-900 group-hover:text-purple-700 transition-colors">
+              <h3 className="text-lg font-bold text-slate-900 group-hover:text-[#6941C6] transition-colors">
                 Paludisme & Goutte Épaisse Expert
               </h3>
-              <p className="text-xs text-slate-500 leading-relaxed">
+              <p className="text-[13px] text-slate-500 leading-relaxed font-medium">
                 Mise en valeur spécifique : résultat en gras, calcul de la densité parasitaire en surbrillance violette et bloc d'observations microscopiques certifié.
               </p>
             </div>
-            <button
-              onClick={() => onNavigate('exams')}
-              className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs font-bold text-purple-700 cursor-pointer"
-            >
+            <div className="mt-6 pt-4 border-t border-slate-200/60 flex items-center justify-between text-[13px] font-bold text-[#6941C6]">
               <span>Voir le catalogue d'analyses</span>
-              <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-            </button>
+              <div className="w-8 h-8 rounded-full bg-[#6941C6]/5 text-[#6941C6] flex items-center justify-center group-hover:bg-[#6941C6] group-hover:text-white transition-colors">
+                <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
+              </div>
+            </div>
           </div>
 
           {/* Card 2: Packs Prénatals BPN */}
-          <div className="bg-white rounded-3xl p-6 border border-slate-200/80 shadow-xs hover:shadow-md hover:border-[#6366F1] transition-all group flex flex-col justify-between">
-            <div className="space-y-3">
-              <div className="w-12 h-12 rounded-2xl bg-[#EEEDFC] text-[#5B46F6] flex items-center justify-center font-bold">
-                <Stethoscope className="w-6 h-6" />
+          <div className="glass-panel rounded-[32px] p-7 border border-white/60 shadow-sm hover:shadow-xl hover:border-[#6941C6]/30 transition-all group flex flex-col justify-between cursor-pointer" onClick={() => onNavigate('packs')}>
+            <div className="space-y-4">
+              <div className="w-14 h-14 rounded-[20px] bg-[#F2EEFF]/80 border border-[#EAE4FF] text-[#6941C6] flex items-center justify-center font-bold">
+                <Stethoscope className="w-7 h-7" />
               </div>
-              <h3 className="text-base font-bold text-slate-900 group-hover:text-[#5B46F6] transition-colors">
-                Packs Prénatals & Bilans Métaboliques
+              <h3 className="text-lg font-bold text-slate-900 group-hover:text-[#6941C6] transition-colors">
+                Packs Prénatals & Bilans
               </h3>
-              <p className="text-xs text-slate-500 leading-relaxed">
+              <p className="text-[13px] text-slate-500 leading-relaxed font-medium">
                 Protocoles groupés en 1 clic : BPN Maternité (NFS, Albuminurie, Glycémie, Goutte Épaisse, VIH, Sérologies) avec interprétation automatique intégrée.
               </p>
             </div>
-            <button
-              onClick={() => onNavigate('packs')}
-              className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs font-bold text-[#5B46F6] cursor-pointer"
-            >
+            <div className="mt-6 pt-4 border-t border-slate-200/60 flex items-center justify-between text-[13px] font-bold text-[#6941C6]">
               <span>Explorer les packs cliniques</span>
-              <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-            </button>
+              <div className="w-8 h-8 rounded-full bg-[#6941C6]/5 text-[#6941C6] flex items-center justify-center group-hover:bg-[#6941C6] group-hover:text-white transition-colors">
+                <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
+              </div>
+            </div>
           </div>
 
           {/* Card 3: Impression & Édition ISO 15189 */}
-          <div className="bg-white rounded-3xl p-6 border border-slate-200/80 shadow-xs hover:shadow-md hover:border-[#10B981] transition-all group flex flex-col justify-between">
-            <div className="space-y-3">
-              <div className="w-12 h-12 rounded-2xl bg-[#E8F8EC] text-[#16A34A] flex items-center justify-center font-bold">
-                <Printer className="w-6 h-6" />
+          <div className="glass-panel rounded-[32px] p-7 border border-white/60 shadow-sm hover:shadow-xl hover:border-[#059669]/30 transition-all group flex flex-col justify-between cursor-pointer" onClick={() => onNavigate('reports')}>
+            <div className="space-y-4">
+              <div className="w-14 h-14 rounded-[20px] bg-emerald-50/80 border border-emerald-100 text-[#059669] flex items-center justify-center font-bold">
+                <Printer className="w-7 h-7" />
               </div>
-              <h3 className="text-base font-bold text-slate-900 group-hover:text-[#16A34A] transition-colors">
-                Édition & Impression ISO 15189
+              <h3 className="text-lg font-bold text-slate-900 group-hover:text-[#059669] transition-colors">
+                Édition & Impression
               </h3>
-              <p className="text-xs text-slate-500 leading-relaxed">
+              <p className="text-[13px] text-slate-500 leading-relaxed font-medium">
                 Génération instantanée des comptes-rendus avec en-tête d'établissement, gabarit A4 officiel et double A5 massicot avec signature biologique.
               </p>
             </div>
-            <button
-              onClick={() => onNavigate('reports')}
-              className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs font-bold text-[#16A34A] cursor-pointer"
-            >
+            <div className="mt-6 pt-4 border-t border-slate-200/60 flex items-center justify-between text-[13px] font-bold text-[#059669]">
               <span>Consulter les comptes-rendus</span>
-              <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-            </button>
+              <div className="w-8 h-8 rounded-full bg-[#059669]/5 text-[#059669] flex items-center justify-center group-hover:bg-[#059669] group-hover:text-white transition-colors">
+                <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
+              </div>
+            </div>
           </div>
 
           {/* Card 4: Validation Biologique ISO 15189 */}
-          <div className="bg-white rounded-3xl p-6 border border-slate-200/80 shadow-xs hover:shadow-md hover:border-blue-400 transition-all group flex flex-col justify-between">
-            <div className="space-y-3">
-              <div className="w-12 h-12 rounded-2xl bg-blue-50 text-blue-700 flex items-center justify-center font-bold">
-                <ShieldCheck className="w-6 h-6" />
+          <div className="glass-panel rounded-[32px] p-7 border border-white/60 shadow-sm hover:shadow-xl hover:border-blue-500/30 transition-all group flex flex-col justify-between cursor-pointer" onClick={() => onNavigate('reports')}>
+            <div className="space-y-4">
+              <div className="w-14 h-14 rounded-[20px] bg-blue-50/80 border border-blue-100 text-blue-600 flex items-center justify-center font-bold">
+                <ShieldCheck className="w-7 h-7" />
               </div>
-              <h3 className="text-base font-bold text-slate-900 group-hover:text-blue-700 transition-colors">
+              <h3 className="text-lg font-bold text-slate-900 group-hover:text-blue-600 transition-colors">
                 Validation & Visa Biologiste
               </h3>
-              <p className="text-xs text-slate-500 leading-relaxed">
-                Visa numérique horodaté, détection en temps réel des valeurs critiques (anémie sévère, glycémie d'urgence) et horodatage ISO inviolable.
+              <p className="text-[13px] text-slate-500 leading-relaxed font-medium">
+                Visa numérique horodaté, détection en temps réel des valeurs critiques (anémie sévère, glycémie d'urgence) et horodatage inviolable.
               </p>
             </div>
-            <button
-              onClick={() => onNavigate('reports')}
-              className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs font-bold text-blue-700 cursor-pointer"
-            >
+            <div className="mt-6 pt-4 border-t border-slate-200/60 flex items-center justify-between text-[13px] font-bold text-blue-600">
               <span>Accéder aux validations ({pendingCount})</span>
-              <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-            </button>
+              <div className="w-8 h-8 rounded-full bg-blue-600/5 text-blue-600 flex items-center justify-center group-hover:bg-blue-600 group-hover:text-white transition-colors">
+                <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
+              </div>
+            </div>
           </div>
 
           {/* Card 5: Cartographie Anatomique 3D */}
-          <div className="bg-white rounded-3xl p-6 border border-slate-200/80 shadow-xs hover:shadow-md hover:border-amber-400 transition-all group flex flex-col justify-between">
-            <div className="space-y-3">
-              <div className="w-12 h-12 rounded-2xl bg-amber-50 text-amber-700 flex items-center justify-center font-bold">
-                <Activity className="w-6 h-6" />
+          <div className="glass-panel rounded-[32px] p-7 border border-white/60 shadow-sm hover:shadow-xl hover:border-amber-500/30 transition-all group flex flex-col justify-between cursor-pointer" onClick={() => onNavigate('anatomy')}>
+            <div className="space-y-4">
+              <div className="w-14 h-14 rounded-[20px] bg-amber-50/80 border border-amber-100 text-amber-600 flex items-center justify-center font-bold">
+                <Activity className="w-7 h-7" />
               </div>
-              <h3 className="text-base font-bold text-slate-900 group-hover:text-amber-700 transition-colors">
+              <h3 className="text-lg font-bold text-slate-900 group-hover:text-amber-600 transition-colors">
                 Cartographie 3D des Organes
               </h3>
-              <p className="text-xs text-slate-500 leading-relaxed">
+              <p className="text-[13px] text-slate-500 leading-relaxed font-medium">
                 Représentation spatiale interactive des systèmes physiologiques (foie, reins, moelle osseuse, pancréas) et corrélation automatique avec les bilans.
               </p>
             </div>
-            <button
-              onClick={() => onNavigate('anatomy')}
-              className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs font-bold text-amber-700 cursor-pointer"
-            >
+            <div className="mt-6 pt-4 border-t border-slate-200/60 flex items-center justify-between text-[13px] font-bold text-amber-600">
               <span>Explorer la cartographie 3D</span>
-              <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-            </button>
+              <div className="w-8 h-8 rounded-full bg-amber-600/5 text-amber-600 flex items-center justify-center group-hover:bg-amber-600 group-hover:text-white transition-colors">
+                <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
+              </div>
+            </div>
           </div>
 
           {/* Card 6: Fiche Patient Complète */}
-          <div className="bg-white rounded-3xl p-6 border border-slate-200/80 shadow-xs hover:shadow-md hover:border-slate-400 transition-all group flex flex-col justify-between">
-            <div className="space-y-3">
-              <div className="w-12 h-12 rounded-2xl bg-slate-100 text-slate-800 flex items-center justify-center font-bold">
-                <Users className="w-6 h-6" />
+          <div className="glass-panel rounded-[32px] p-7 border border-white/60 shadow-sm hover:shadow-xl hover:border-slate-500/30 transition-all group flex flex-col justify-between cursor-pointer" onClick={() => onNavigate('patients')}>
+            <div className="space-y-4">
+              <div className="w-14 h-14 rounded-[20px] bg-slate-100/80 border border-slate-200 text-slate-700 flex items-center justify-center font-bold">
+                <Users className="w-7 h-7" />
               </div>
-              <h3 className="text-base font-bold text-slate-900 group-hover:text-slate-700 transition-colors">
+              <h3 className="text-lg font-bold text-slate-900 group-hover:text-slate-800 transition-colors">
                 Dossier Patient & Surveillance
               </h3>
-              <p className="text-xs text-slate-500 leading-relaxed">
+              <p className="text-[13px] text-slate-500 leading-relaxed font-medium">
                 Suivi longitudinal de l'hémoglobine, alertes pré-remplies, gestion des prescripteurs et historique complet des examens réalisés.
               </p>
             </div>
-            <button
-              onClick={() => onNavigate('patients')}
-              className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs font-bold text-slate-700 cursor-pointer"
-            >
+            <div className="mt-6 pt-4 border-t border-slate-200/60 flex items-center justify-between text-[13px] font-bold text-slate-700">
               <span>Consulter le registre ({patientsCount})</span>
-              <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-            </button>
+              <div className="w-8 h-8 rounded-full bg-slate-700/5 text-slate-700 flex items-center justify-center group-hover:bg-slate-700 group-hover:text-white transition-colors">
+                <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
+              </div>
+            </div>
           </div>
         </div>
       </div>
 
-      {/* Brand & Lab Identity Box */}
-      <div className="bg-white rounded-3xl p-8 border border-slate-200/80 shadow-xs flex flex-col md:flex-row items-center justify-between gap-6">
-        <div className="flex items-center gap-4">
-          <BrandLogo
-            customUrl={settings.logoUrl}
-            preset="crystal_cross"
-            size="lg"
-          />
-          <div>
-            <div className="text-lg font-extrabold text-slate-900">
-              {settings.labName}
-            </div>
-            <div className="text-xs text-slate-500">
-              {settings.labCenter} · {settings.labAddress}
-            </div>
-            <div className="text-[11px] text-[#5B46F6] font-mono mt-0.5">
-              Accréditation ISO 15189 · Agrément N° {settings.labAgrement}
-            </div>
-          </div>
-        </div>
 
-        <div className="flex items-center gap-3">
-          <button
-            onClick={() => onNavigate('admin')}
-            className="px-4 py-2 rounded-full border border-slate-300 hover:bg-slate-50 text-xs font-bold text-slate-700 transition-colors cursor-pointer"
-          >
-            Paramètres du Laboratoire
-          </button>
-          <button
-            onClick={() => onNavigate('reports')}
-            className="px-4 py-2 rounded-full bg-[#5B46F6] hover:bg-[#4F46E5] text-white text-xs font-bold transition-colors cursor-pointer shadow-xs"
-          >
-            Accéder aux Bulletins
-          </button>
+
+      {/* Minimalist Footer Line */}
+      <div className="flex flex-col sm:flex-row items-center justify-between text-[13px] text-slate-500 font-medium px-4">
+        <div className="flex items-center gap-6 mb-4 sm:mb-0">
+          <a href="#" className="hover:text-slate-800 transition-colors">Confidentialité</a>
+          <a href="#" className="hover:text-slate-800 transition-colors">CGU</a>
+          <a href="mailto:contact@chaplab.com" className="hover:text-slate-800 transition-colors">contact@chaplab.com</a>
+        </div>
+        <div>
+          © 2026 EBUNI STUDIO. Digital Medical Solution.
         </div>
       </div>
     </div>

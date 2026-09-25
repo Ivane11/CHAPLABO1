@@ -21,6 +21,7 @@ interface AdminViewProps {
   equipments: Equipment[];
   onSaveSettings: (settings: LabSettings) => void;
   onToggleExamActive: (examId: string) => void;
+  onUpdateExamPrice?: (examId: string, newPrice: number) => void;
   onExportBackup: () => void;
   onImportBackup: (jsonStr: string) => boolean;
   onFactoryReset: () => void;
@@ -33,6 +34,7 @@ export const AdminView: React.FC<AdminViewProps> = ({
   equipments,
   onSaveSettings,
   onToggleExamActive,
+  onUpdateExamPrice,
   onExportBackup,
   onImportBackup,
   onFactoryReset,
@@ -42,6 +44,30 @@ export const AdminView: React.FC<AdminViewProps> = ({
   const [formData, setFormData] = useState<LabSettings>({ ...settings });
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [catalogSearch, setCatalogSearch] = useState('');
+  
+  const [editingPriceId, setEditingPriceId] = useState<string | null>(null);
+  const [editingPriceValue, setEditingPriceValue] = useState<string>('');
+
+  const [showResetConfirm, setShowResetConfirm] = useState(false);
+  const [resetCode, setResetCode] = useState('');
+  const [resetError, setResetError] = useState('');
+  const [isWiping, setIsWiping] = useState(false);
+  const [wipeProgress, setWipeProgress] = useState(0);
+
+  const handleEditPriceStart = (exam: ExamDefinition) => {
+    setEditingPriceId(exam.id);
+    setEditingPriceValue(exam.price.toString());
+  };
+
+  const handleEditPriceSave = (examId: string) => {
+    if (onUpdateExamPrice) {
+      const parsed = parseInt(editingPriceValue, 10);
+      if (!isNaN(parsed) && parsed >= 0) {
+        onUpdateExamPrice(examId, parsed);
+      }
+    }
+    setEditingPriceId(null);
+  };
 
   const handleInputChange = (field: keyof LabSettings, val: string) => {
     setFormData((prev) => ({ ...prev, [field]: val }));
@@ -70,6 +96,28 @@ export const AdminView: React.FC<AdminViewProps> = ({
       }
     };
     reader.readAsText(file);
+  };
+
+  const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    // Vérification type
+    if (!file.type.startsWith('image/')) {
+      alert('Veuillez sélectionner une image (PNG, JPG, SVG, WebP).');
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const dataUrl = event.target?.result as string;
+      if (dataUrl) {
+        setFormData((prev) => ({ ...prev, logoUrl: dataUrl }));
+      }
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleRemoveLogo = () => {
+    setFormData((prev) => ({ ...prev, logoUrl: undefined }));
   };
 
   return (
@@ -251,6 +299,49 @@ export const AdminView: React.FC<AdminViewProps> = ({
                 />
               </div>
 
+              {/* ─────── LOGO DU LABORATOIRE ─────── */}
+              <div className="border border-dashed border-slate-300 rounded-xl p-4 bg-slate-50/60">
+                <label className="block text-xs font-bold text-slate-700 mb-2 uppercase tracking-wider">
+                  🎨 Logo du Laboratoire (Fiche d'impression)
+                </label>
+                <p className="text-[10px] text-slate-400 mb-3">
+                  Le logo apparaîtra en haut à gauche de chaque compte-rendu PDF imprimé. Format recommandé : PNG transparent, 200×200 px ou plus.
+                </p>
+
+                {formData.logoUrl ? (
+                  <div className="flex items-center gap-4">
+                    <img
+                      src={formData.logoUrl}
+                      alt="Logo laboratoire"
+                      className="w-16 h-16 object-contain border border-slate-200 rounded-lg bg-white p-1 shadow-sm"
+                    />
+                    <div className="flex flex-col gap-1.5">
+                      <span className="text-[11px] font-semibold text-emerald-600">✔ Logo chargé</span>
+                      <label className="cursor-pointer text-[11px] text-blue-600 font-semibold hover:underline">
+                        Remplacer
+                        <input type="file" accept="image/*" className="hidden" onChange={handleLogoUpload} />
+                      </label>
+                      <button
+                        type="button"
+                        onClick={handleRemoveLogo}
+                        className="text-[11px] text-red-500 font-semibold hover:underline text-left"
+                      >
+                        Supprimer
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <label className="cursor-pointer flex items-center gap-3 w-full h-14 px-4 border-2 border-dashed border-blue-300 rounded-lg bg-blue-50 hover:bg-blue-100 transition-colors">
+                    <Upload className="w-4 h-4 text-blue-500 shrink-0" />
+                    <div>
+                      <div className="text-xs font-bold text-blue-700">Cliquez pour importer votre logo</div>
+                      <div className="text-[10px] text-blue-400">PNG, JPG, SVG, WebP acceptés</div>
+                    </div>
+                    <input type="file" accept="image/*" className="hidden" onChange={handleLogoUpload} />
+                  </label>
+                )}
+              </div>
+
               <div className="pt-2 flex items-center justify-between">
                 <button
                   type="submit"
@@ -285,7 +376,7 @@ export const AdminView: React.FC<AdminViewProps> = ({
 
               <div className="p-4 rounded-xl border border-slate-200 bg-slate-50/70 space-y-3">
                 <div className="flex items-start gap-3">
-                  <div className="w-12 h-12 rounded-xl bg-slate-900 text-white flex items-center justify-center font-bold text-lg shrink-0 shadow-xs">
+                  <div className="w-12 h-12 rounded-xl bg-[#5832E5] text-white flex items-center justify-center font-bold text-lg shrink-0 shadow-xs">
                     C
                   </div>
                   <div>
@@ -377,7 +468,33 @@ export const AdminView: React.FC<AdminViewProps> = ({
                         {exam.name}
                       </td>
                       <td className="py-3 px-4">{exam.category}</td>
-                      <td className="py-3 px-4 font-mono font-medium">{exam.price} FCFA</td>
+                      <td className="py-3 px-4 font-mono font-medium">
+                        {editingPriceId === exam.id ? (
+                          <div className="flex items-center gap-2">
+                            <input
+                              type="number"
+                              value={editingPriceValue}
+                              onChange={(e) => setEditingPriceValue(e.target.value)}
+                              className="w-20 bg-white border border-slate-300 rounded px-2 py-1 outline-none text-xs"
+                              autoFocus
+                              onBlur={() => handleEditPriceSave(exam.id)}
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter') handleEditPriceSave(exam.id);
+                                if (e.key === 'Escape') setEditingPriceId(null);
+                              }}
+                            />
+                            <span>FCFA</span>
+                          </div>
+                        ) : (
+                          <div 
+                            className="cursor-pointer hover:bg-slate-100 px-1 -ml-1 rounded transition-colors inline-block"
+                            onClick={() => handleEditPriceStart(exam)}
+                            title="Cliquez pour modifier le tarif"
+                          >
+                            {exam.price} FCFA
+                          </div>
+                        )}
+                      </td>
                       <td className="py-3 px-4 text-center">
                         <button
                           type="button"
@@ -473,10 +590,10 @@ export const AdminView: React.FC<AdminViewProps> = ({
               </div>
             </div>
 
-            <p className="text-xs text-slate-600 leading-relaxed">
-              Le système CHAPLAB fonctionne en architecture <strong>Local-First</strong> : toutes les données
-              sont conservées sur votre ordinateur. Pour transférer la base vers un autre poste ou créer une archive,
-              utilisez les boutons ci-dessous.
+            <p className="text-[13px] font-medium text-amber-700 bg-amber-50 p-3 rounded-lg border border-amber-200">
+              <strong>ATTENTION :</strong> Le système CHAPLAB fonctionne en architecture <strong>Local-First</strong> (toutes les données sont conservées uniquement sur cet ordinateur). 
+              <br/><br/>
+              <strong>Précision importante :</strong> Il faut souvent enregistrer vos données (télécharger une sauvegarde) de sorte à ne pas perdre vos données en cas de panne de l'ordinateur ou d'effacement du navigateur.
             </p>
 
             <div className="pt-2 flex flex-col sm:flex-row gap-3">
@@ -548,7 +665,7 @@ export const AdminView: React.FC<AdminViewProps> = ({
                 </div>
                 <button
                   type="button"
-                  onClick={onFactoryReset}
+                  onClick={() => setShowResetConfirm(true)}
                   className="px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white rounded-lg font-semibold cursor-pointer shadow-xs"
                 >
                   Réinitialiser
@@ -558,6 +675,93 @@ export const AdminView: React.FC<AdminViewProps> = ({
           </div>
         </div>
       )}
+
+      {showResetConfirm && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm">
+          <div className="bg-white rounded-[24px] p-6 max-w-sm w-full shadow-2xl animate-in zoom-in duration-200">
+            <div className="flex items-center gap-3 text-red-600 mb-4">
+              <AlertTriangle className="w-6 h-6" />
+              <h2 className="text-lg font-bold">Action Irréversible</h2>
+            </div>
+            {isWiping ? (
+              <div className="flex flex-col items-center justify-center py-6">
+                <div className="w-full bg-slate-100 rounded-full h-3 mb-4 overflow-hidden relative">
+                  <div 
+                    className="bg-red-500 h-3 rounded-full transition-all duration-300 ease-out shadow-[0_0_15px_rgba(239,68,68,0.7)] relative"
+                    style={{ width: `${wipeProgress}%` }}
+                  >
+                    <div className="absolute top-0 right-0 bottom-0 left-0 bg-[linear-gradient(45deg,rgba(255,255,255,0.2)_25%,transparent_25%,transparent_50%,rgba(255,255,255,0.2)_50%,rgba(255,255,255,0.2)_75%,transparent_75%,transparent)] bg-[length:1rem_1rem] animate-[progress-stripes_1s_linear_infinite]"></div>
+                  </div>
+                </div>
+                <div className="text-red-600 font-bold font-mono text-sm uppercase tracking-widest animate-pulse">
+                  Destruction en cours... {wipeProgress}%
+                </div>
+              </div>
+            ) : (
+              <>
+                <p className="text-sm text-slate-600 mb-6">
+                  Cette action va effacer <strong>intégralement</strong> la base de données locale (patients, dossiers, configuration) et remettre l'application à zéro. 
+                  <br/><br/>
+                  Entrez le code administrateur pour confirmer :
+                </p>
+                <input 
+                  type="password"
+                  placeholder="Code admin..."
+                  value={resetCode}
+                  onChange={(e) => setResetCode(e.target.value)}
+                  className="w-full px-4 py-2 border border-slate-200 rounded-xl mb-2 focus:border-red-500 focus:ring-4 focus:ring-red-500/10 outline-none"
+                />
+                {resetError && <p className="text-xs text-red-500 mb-4 font-semibold">{resetError}</p>}
+                
+                <div className="flex justify-end gap-2 mt-6">
+                  <button
+                    onClick={() => {
+                      setShowResetConfirm(false);
+                      setResetCode('');
+                      setResetError('');
+                    }}
+                    className="px-4 py-2 text-sm font-bold text-slate-600 hover:bg-slate-100 rounded-full transition-colors cursor-pointer"
+                  >
+                    Annuler
+                  </button>
+                  <button
+                    onClick={() => {
+                      if (resetCode === 'admin') {
+                        setIsWiping(true);
+                        setWipeProgress(0);
+                        
+                        let progress = 0;
+                        const interval = setInterval(() => {
+                          progress += Math.floor(Math.random() * 15) + 5;
+                          if (progress > 100) progress = 100;
+                          setWipeProgress(progress);
+                          
+                          if (progress === 100) {
+                            clearInterval(interval);
+                            setTimeout(() => {
+                              onFactoryReset();
+                              setShowResetConfirm(false);
+                              setIsWiping(false);
+                              setWipeProgress(0);
+                              setResetCode('');
+                            }, 500);
+                          }
+                        }, 250);
+                      } else {
+                        setResetError('Code incorrect');
+                      }
+                    }}
+                    className="px-4 py-2 text-sm font-bold text-white bg-red-600 hover:bg-red-700 rounded-full transition-colors cursor-pointer"
+                  >
+                    Confirmer la destruction
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      )}
+
     </div>
   );
 };
