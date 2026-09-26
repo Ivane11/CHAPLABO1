@@ -56,6 +56,10 @@ export const PwaUpdater: React.FC<{ mode?: 'inline' | 'global' }> = ({ mode = 'i
 
   const handleApplyUpdate = () => {
     updateServiceWorker(true);
+    // Force le rechargement si la lib ne le fait pas d'elle-même
+    setTimeout(() => {
+      window.location.reload();
+    }, 1000);
   };
 
   if (mode === 'global' && updateState === 'idle' && !needRefresh) {
