@@ -42,6 +42,34 @@ export const LandingPageView: React.FC<LandingPageViewProps> = ({
 }) => {
   return (
     <div className="space-y-10 pb-16">
+      {/* Header Navbar */}
+      <header className="flex items-center justify-between px-6 py-4 bg-white/70 backdrop-blur-md rounded-[32px] border border-white/60 shadow-sm">
+        <div className="flex items-center">
+          <BrandLogo size="md" />
+        </div>
+        
+        <nav className="hidden md:flex items-center gap-8 text-[14px] font-medium text-slate-600">
+          <a href="#" className="hover:text-slate-900 transition-colors">Fonctionnalités</a>
+          <a href="#" className="hover:text-slate-900 transition-colors">Avis</a>
+          <a href="#" className="hover:text-slate-900 transition-colors">FAQ</a>
+        </nav>
+        
+        <div className="flex items-center gap-6">
+          <div className="hidden sm:flex items-center gap-1.5 cursor-pointer text-[14px] font-medium text-slate-700 hover:text-slate-900">
+            <span className="text-lg">🇫🇷</span>
+            <span>FR</span>
+            <ChevronRight className="w-3.5 h-3.5 rotate-90 opacity-60" />
+          </div>
+          <button 
+            onClick={onOpenLogin}
+            className="flex items-center gap-2 bg-[#1A1A1A] hover:bg-black text-white px-5 py-2.5 rounded-full text-[14px] font-medium transition-colors"
+          >
+            Commencer
+            <ArrowRight className="w-4 h-4" />
+          </button>
+        </div>
+      </header>
+
       {/* Hero Showcase Section with Glassmorphism and Color Accents */}
       <div className="relative rounded-[40px] overflow-hidden bg-white/40 border border-white/60 shadow-xl shadow-[#6941C6]/5 p-8 sm:p-12 lg:p-16 backdrop-blur-3xl">
         {/* Soft Ambient Glows */}
@@ -176,7 +204,7 @@ export const LandingPageView: React.FC<LandingPageViewProps> = ({
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {/* Card 1: Goutte Épaisse & Paludisme */}
-          <div className="glass-panel rounded-[32px] p-7 border border-white/60 shadow-sm hover:shadow-xl hover:border-[#6941C6]/30 transition-all group flex flex-col justify-between cursor-pointer" onClick={() => onNavigate('exams')}>
+          <div className="glass-panel rounded-[32px] p-7 border border-white/60 shadow-sm hover:shadow-xl hover:border-[#6941C6]/30 transition-all group flex flex-col justify-between cursor-pointer" onClick={onOpenLogin}>
             <div className="space-y-4">
               <div className="w-14 h-14 rounded-[20px] bg-purple-50/80 border border-purple-100 text-[#6941C6] flex items-center justify-center font-bold">
                 <TestTubes className="w-7 h-7" />
@@ -197,7 +225,7 @@ export const LandingPageView: React.FC<LandingPageViewProps> = ({
           </div>
 
           {/* Card 2: Packs Prénatals BPN */}
-          <div className="glass-panel rounded-[32px] p-7 border border-white/60 shadow-sm hover:shadow-xl hover:border-[#6941C6]/30 transition-all group flex flex-col justify-between cursor-pointer" onClick={() => onNavigate('packs')}>
+          <div className="glass-panel rounded-[32px] p-7 border border-white/60 shadow-sm hover:shadow-xl hover:border-[#6941C6]/30 transition-all group flex flex-col justify-between cursor-pointer" onClick={onOpenLogin}>
             <div className="space-y-4">
               <div className="w-14 h-14 rounded-[20px] bg-[#F2EEFF]/80 border border-[#EAE4FF] text-[#6941C6] flex items-center justify-center font-bold">
                 <Stethoscope className="w-7 h-7" />
@@ -218,7 +246,7 @@ export const LandingPageView: React.FC<LandingPageViewProps> = ({
           </div>
 
           {/* Card 3: Impression & Édition ISO 15189 */}
-          <div className="glass-panel rounded-[32px] p-7 border border-white/60 shadow-sm hover:shadow-xl hover:border-[#059669]/30 transition-all group flex flex-col justify-between cursor-pointer" onClick={() => onNavigate('reports')}>
+          <div className="glass-panel rounded-[32px] p-7 border border-white/60 shadow-sm hover:shadow-xl hover:border-[#059669]/30 transition-all group flex flex-col justify-between cursor-pointer" onClick={onOpenLogin}>
             <div className="space-y-4">
               <div className="w-14 h-14 rounded-[20px] bg-emerald-50/80 border border-emerald-100 text-[#059669] flex items-center justify-center font-bold">
                 <Printer className="w-7 h-7" />
@@ -239,7 +267,7 @@ export const LandingPageView: React.FC<LandingPageViewProps> = ({
           </div>
 
           {/* Card 4: Validation Biologique ISO 15189 */}
-          <div className="glass-panel rounded-[32px] p-7 border border-white/60 shadow-sm hover:shadow-xl hover:border-blue-500/30 transition-all group flex flex-col justify-between cursor-pointer" onClick={() => onNavigate('reports')}>
+          <div className="glass-panel rounded-[32px] p-7 border border-white/60 shadow-sm hover:shadow-xl hover:border-blue-500/30 transition-all group flex flex-col justify-between cursor-pointer" onClick={onOpenLogin}>
             <div className="space-y-4">
               <div className="w-14 h-14 rounded-[20px] bg-blue-50/80 border border-blue-100 text-blue-600 flex items-center justify-center font-bold">
                 <ShieldCheck className="w-7 h-7" />
@@ -260,7 +288,7 @@ export const LandingPageView: React.FC<LandingPageViewProps> = ({
           </div>
 
           {/* Card 5: Cartographie Anatomique 3D */}
-          <div className="glass-panel rounded-[32px] p-7 border border-white/60 shadow-sm hover:shadow-xl hover:border-amber-500/30 transition-all group flex flex-col justify-between cursor-pointer" onClick={() => onNavigate('anatomy')}>
+          <div className="glass-panel rounded-[32px] p-7 border border-white/60 shadow-sm hover:shadow-xl hover:border-amber-500/30 transition-all group flex flex-col justify-between cursor-pointer" onClick={onOpenLogin}>
             <div className="space-y-4">
               <div className="w-14 h-14 rounded-[20px] bg-amber-50/80 border border-amber-100 text-amber-600 flex items-center justify-center font-bold">
                 <Activity className="w-7 h-7" />
@@ -281,7 +309,7 @@ export const LandingPageView: React.FC<LandingPageViewProps> = ({
           </div>
 
           {/* Card 6: Fiche Patient Complète */}
-          <div className="glass-panel rounded-[32px] p-7 border border-white/60 shadow-sm hover:shadow-xl hover:border-slate-500/30 transition-all group flex flex-col justify-between cursor-pointer" onClick={() => onNavigate('patients')}>
+          <div className="glass-panel rounded-[32px] p-7 border border-white/60 shadow-sm hover:shadow-xl hover:border-slate-500/30 transition-all group flex flex-col justify-between cursor-pointer" onClick={onOpenLogin}>
             <div className="space-y-4">
               <div className="w-14 h-14 rounded-[20px] bg-slate-100/80 border border-slate-200 text-slate-700 flex items-center justify-center font-bold">
                 <Users className="w-7 h-7" />

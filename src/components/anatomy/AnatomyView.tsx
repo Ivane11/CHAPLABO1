@@ -54,10 +54,10 @@ export const AnatomyView: React.FC<AnatomyViewProps> = ({
   );
 
   // Extract biological metrics from patient's actual latest dossier
-  const nfsHb = latestDossier?.resultats?.NFS_HGB ?? '14.2';
-  const nfsWbc = latestDossier?.resultats?.NFS_WBC ?? '6.8';
-  const nfsPlt = latestDossier?.resultats?.NFS_PLT ?? '245';
-  const crpVal = latestDossier?.resultats?.CRP_VAL ?? '2.1';
+  const nfsHb = latestDossier?.resultats?.NFS_HGB ?? '-';
+  const nfsWbc = latestDossier?.resultats?.NFS_WBC ?? '-';
+  const nfsPlt = latestDossier?.resultats?.NFS_PLT ?? '-';
+  const crpVal = latestDossier?.resultats?.CRP_VAL ?? '-';
 
   return (
     <div className="space-y-6">
@@ -123,10 +123,10 @@ export const AnatomyView: React.FC<AnatomyViewProps> = ({
                 <span>CONSULTATION</span>
               </div>
               <div className="text-[11px] font-semibold text-slate-400 mt-2">
-                {latestDossier?.date || 'Septembre 2026'}
+                {latestDossier?.date || 'N/A'}
               </div>
               <div className="text-xs font-extrabold text-slate-900 mt-0.5 truncate">
-                {latestDossier?.prescripteur || 'Prescription Externe'}
+                {latestDossier?.prescripteur || 'N/A'}
               </div>
             </div>
 
@@ -155,11 +155,11 @@ export const AnatomyView: React.FC<AnatomyViewProps> = ({
             </div>
 
             <div className="text-[11px] font-medium text-sky-100">
-              {latestDossier?.date || 'Aujourd’hui'} · {latestDossier?.sampleType || 'Sang total EDTA'}
+              {latestDossier?.date || 'N/A'} · {latestDossier?.sampleType || 'N/A'}
             </div>
 
             <div className="text-sm font-extrabold text-white leading-snug">
-              {latestDossier?.nomExamen || 'Pack Bilan Prénatal & Hématologie'}
+              {latestDossier?.nomExamen || 'Aucun Examen'}
             </div>
 
             <div className="pt-2 border-t border-sky-400/30 flex items-center justify-between text-[11px]">
@@ -363,10 +363,10 @@ export const AnatomyView: React.FC<AnatomyViewProps> = ({
             <div className="flex items-start justify-between">
               <div>
                 <h2 className="text-lg font-black text-slate-900 tracking-tight">
-                  {currentPatient?.nom} {currentPatient?.prenom}
+                  {currentPatient?.nom || 'Aucun'} {currentPatient?.prenom || 'Patient'}
                 </h2>
                 <div className="text-[11px] font-bold text-slate-400 mt-0.5 font-mono">
-                  Dossier #{currentPatient?.id} · {currentPatient?.age} ans · {currentPatient?.sexe}
+                  Dossier #{currentPatient?.id || '-'} · {currentPatient?.age || '-'} ans · {currentPatient?.sexe || '-'}
                 </div>
               </div>
               <span className="bg-emerald-50 text-emerald-700 border border-emerald-200 text-[10px] font-extrabold px-2.5 py-1 rounded-full uppercase">
@@ -381,7 +381,7 @@ export const AnatomyView: React.FC<AnatomyViewProps> = ({
               </div>
               <p className="text-xs font-bold text-slate-800 mt-1 leading-snug">
                 <span className="text-orange-600 font-extrabold mr-1">[BIO-ISO]</span>
-                {latestDossier?.observations || 'Bilan biologique conforme · Absence d’anomalie critique immédiate.'}
+                {latestDossier?.observations || (latestDossier ? 'Bilan biologique conforme · Absence d’anomalie critique immédiate.' : 'Aucune donnée.')}
               </p>
             </div>
 
@@ -396,7 +396,7 @@ export const AnatomyView: React.FC<AnatomyViewProps> = ({
                     Prescription Soins
                   </div>
                   <div className="text-xs font-black text-slate-900">
-                    {latestDossier?.prescripteur || currentPatient?.prescripteur || 'IDE Camara'}
+                    {latestDossier?.prescripteur || currentPatient?.prescripteur || 'N/A'}
                   </div>
                 </div>
               </div>
@@ -405,7 +405,7 @@ export const AnatomyView: React.FC<AnatomyViewProps> = ({
                   Validé par
                 </div>
                 <div className="text-xs font-extrabold text-emerald-600">
-                  Dr. Kouassi
+                  {latestDossier?.biologisteValidateur || (latestDossier ? 'Dr. Kouassi' : 'N/A')}
                 </div>
               </div>
             </div>

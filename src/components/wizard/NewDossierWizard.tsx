@@ -30,6 +30,7 @@ import {
   interpretHematologyNFS,
 } from '../../utils/interpretation';
 import { ResultGrid } from '../saisie/ResultGrid';
+import { generateDossierId, generatePatientId } from '../../utils/idGenerator';
 
 const getExamStyles = (examId: string) => {
   if (examId.startsWith('EXM-NFS') || examId.includes('HEMATO')) {
@@ -56,6 +57,7 @@ interface NewDossierWizardProps {
   patients: Patient[];
   catalog: ExamDefinition[];
   prescribers: Prescriber[];
+  existingDossiers: DossierReport[];
   initialPatientId?: string;
   initialPackId?: string;
   editDossier?: DossierReport;
@@ -69,6 +71,7 @@ export const NewDossierWizard: React.FC<NewDossierWizardProps> = ({
   patients,
   catalog,
   prescribers,
+  existingDossiers,
   initialPatientId,
   initialPackId,
   editDossier,
@@ -77,8 +80,7 @@ export const NewDossierWizard: React.FC<NewDossierWizardProps> = ({
 }) => {
   if (!isOpen) return null;
 
-  // UUID generation for robust IDs
-  const generateId = (prefix: string) => `${prefix}-${new Date().getTime().toString(36)}-${Math.random().toString(36).substr(2, 5)}`;
+  if (!isOpen) return null;
 
   const [step, setStep] = useState<1 | 2 | 3>(1);
   const [errorMessage, setErrorMessage] = useState('');
@@ -142,7 +144,7 @@ export const NewDossierWizard: React.FC<NewDossierWizardProps> = ({
     patientMode === 'existing'
       ? patients.find((p) => p.id === selectedPatientId) || patients[0]
       : {
-          id: generateId('CHP'),
+          id: generatePatientId(patients),
           nom: newPatientNom || 'NOUVEAU',
           prenom: newPatientPrenom || 'PATIENT',
           sexe: newPatientSexe,
@@ -215,7 +217,7 @@ export const NewDossierWizard: React.FC<NewDossierWizardProps> = ({
         : 'Analyses Médicales Multi-paramètres';
 
     const finalDossier: DossierReport = {
-      id: editDossier ? editDossier.id : generateId('RPT'),
+      id: editDossier ? editDossier.id : generateDossierId(existingDossiers),
       patientId: activePatient.id,
       date: dossierDate,
       nomExamen: examTitle,

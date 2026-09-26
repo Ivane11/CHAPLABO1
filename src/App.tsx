@@ -262,6 +262,8 @@ export function App() {
     setCatalog(await StorageService.getCatalog());
     setSettings(await StorageService.getSettings());
     setEquipments(await StorageService.getEquipments());
+    setSelectedPatientId('');
+    setCurrentView('home');
   };
 
   const handlePurgeDrafts = () => {
@@ -300,7 +302,7 @@ export function App() {
     <>
       {currentView === 'home' ? (
         <div className="min-h-screen bg-[#F8FAFC] selection:bg-[#F2EEFF] selection:text-[#6941C6] font-sans antialiased">
-          <div className="max-w-[1540px] mx-auto px-4 sm:px-6 lg:px-8 py-8 lg:py-12">
+          <div className="max-w-[1540px] mx-auto px-4 sm:px-6 lg:px-8 pt-4 pb-8 lg:pt-6 lg:pb-12">
             <LandingPageView
               settings={settings}
               onNavigate={(view) => setCurrentView(view as ViewMode)}
@@ -466,6 +468,7 @@ export function App() {
         isOpen={isWizardOpen}
         onClose={() => setIsWizardOpen(false)}
         patients={patients}
+        existingDossiers={dossiers}
         catalog={catalog}
         prescribers={INITIAL_PRESCRIBERS}
         initialPatientId={wizardPatientId}
@@ -480,7 +483,7 @@ export function App() {
         isOpen={isNewPatientModalOpen}
         onClose={() => setIsNewPatientModalOpen(false)}
         prescribers={INITIAL_PRESCRIBERS}
-        existingPatientsCount={patients.length}
+        patients={patients}
         onSavePatient={handleSaveNewPatient}
       />
 

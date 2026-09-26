@@ -1,12 +1,13 @@
 import React, { useState } from 'react';
 import { X, AlertCircle } from 'lucide-react';
 import { Patient, Prescriber } from '../../types';
+import { generatePatientId } from '../../utils/idGenerator';
 
 interface NewPatientModalProps {
   isOpen: boolean;
   onClose: () => void;
   prescribers: Prescriber[];
-  existingPatientsCount: number;
+  patients: Patient[];
   onSavePatient: (patient: Patient) => void;
 }
 
@@ -14,7 +15,7 @@ export const NewPatientModal: React.FC<NewPatientModalProps> = ({
   isOpen,
   onClose,
   prescribers,
-  existingPatientsCount,
+  patients,
   onSavePatient,
 }) => {
   if (!isOpen) return null;
@@ -39,7 +40,7 @@ export const NewPatientModal: React.FC<NewPatientModalProps> = ({
       return;
     }
 
-    const newId = `CHP-2026-${String(existingPatientsCount + 1).padStart(5, '0')}`;
+    const newId = generatePatientId(patients);
     const newPatient: Patient = {
       id: newId,
       nom: nom.trim().toUpperCase(),
