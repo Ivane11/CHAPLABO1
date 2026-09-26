@@ -15,6 +15,10 @@ import {
   CheckCircle2,
   Clock,
   ExternalLink,
+  Microscope,
+  Syringe,
+  Droplets,
+  HeartPulse,
 } from 'lucide-react';
 import { LabSettings } from '../../types';
 import { BrandLogo } from '../common/BrandLogo';
@@ -192,9 +196,24 @@ export const LandingPageView: React.FC<LandingPageViewProps> = ({
 
 
       {/* Feature Showcase Grid: 6 Pillars */}
-      <div>
-        <div className="text-center max-w-2xl mx-auto space-y-3 mb-10">
-          <h2 className="text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight font-sans">
+      <div className="relative">
+        <div className="text-center max-w-3xl mx-auto space-y-3 mb-14 relative z-10">
+          
+          {/* Animated decorative background elements */}
+          <div className="absolute -left-12 -top-8 text-[#6941C6]/10 animate-[bounce_4s_infinite] drop-shadow-xl hidden md:block">
+            <Microscope className="w-16 h-16" />
+          </div>
+          <div className="absolute right-0 -top-4 text-emerald-500/10 animate-[bounce_5s_infinite_0.5s] drop-shadow-xl hidden md:block">
+            <HeartPulse className="w-14 h-14" />
+          </div>
+          <div className="absolute left-1/4 -bottom-6 text-emerald-500/10 animate-[bounce_4.5s_infinite_1s] drop-shadow-xl hidden md:block">
+            <Droplets className="w-10 h-10" />
+          </div>
+          <div className="absolute right-1/4 -bottom-4 text-[#6941C6]/10 animate-[bounce_3.5s_infinite_1.5s] drop-shadow-xl hidden md:block">
+            <Syringe className="w-12 h-12" />
+          </div>
+
+          <h2 className="text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight font-sans relative">
             Une Plateforme Complète, Fluide et Modulaire
           </h2>
           <p className="text-sm sm:text-base text-slate-500 font-medium">
