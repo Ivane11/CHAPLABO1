@@ -12,7 +12,7 @@ export default defineConfig(() => {
       tailwindcss(),
       VitePWA({
         registerType: 'prompt',
-        includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'masked-icon.svg'],
+        includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'masked-icon.svg', 'Doctors-amico.svg'],
         manifest: {
           name: 'CHAPLAB - Système de Gestion de Laboratoire',
           short_name: 'CHAPLAB',

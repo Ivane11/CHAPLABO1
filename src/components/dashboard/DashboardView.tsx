@@ -73,93 +73,95 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
     }
   };
 
-  // Calculs dynamiques
-  const totalDossiers = dossiers.length;
-  const dossiersValides = dossiers.filter((d) => d.statut === 'VALIDE' || d.statut === 'IMPRIME').length;
-  const dossiersEnAttente = dossiers.filter((d) => d.statut === 'A_VALIDER').length;
-  const tauxValidation = totalDossiers > 0 ? Math.round((dossiersValides / totalDossiers) * 100) : 0;
+  // Calculs dynamiques memoizés pour la performance
+  const stats = React.useMemo(() => {
+    const totalDossiers = dossiers.length;
+    const dossiersValides = dossiers.filter((d) => d.statut === 'VALIDE' || d.statut === 'IMPRIME').length;
+    const dossiersEnAttente = dossiers.filter((d) => d.statut === 'A_VALIDER').length;
+    const tauxValidation = totalDossiers > 0 ? Math.round((dossiersValides / totalDossiers) * 100) : 0;
 
-  // Calcul du délai moyen de rendu (Turnaround Time)
-  let avgTurnaroundMinutes = 0;
-  const validatedDossiers = dossiers.filter(d => (d.statut === 'VALIDE' || d.statut === 'IMPRIME') && d.dateValidation);
-  if (validatedDossiers.length > 0) {
-    let totalMinutes = 0;
-    validatedDossiers.forEach(d => {
-      const start = new Date(d.date).getTime();
-      const end = new Date(d.dateValidation!).getTime();
-      if (!isNaN(start) && !isNaN(end) && end > start) {
-        totalMinutes += (end - start) / (1000 * 60);
-      }
-    });
-    avgTurnaroundMinutes = Math.round(totalMinutes / validatedDossiers.length);
-  }
+    let avgTurnaroundMinutes = 0;
+    const validatedDossiers = dossiers.filter(d => (d.statut === 'VALIDE' || d.statut === 'IMPRIME') && d.dateValidation);
+    if (validatedDossiers.length > 0) {
+      let totalMinutes = 0;
+      validatedDossiers.forEach(d => {
+        const start = new Date(d.date).getTime();
+        const end = new Date(d.dateValidation!).getTime();
+        if (!isNaN(start) && !isNaN(end) && end > start) {
+          totalMinutes += (end - start) / (1000 * 60);
+        }
+      });
+      avgTurnaroundMinutes = Math.round(totalMinutes / validatedDossiers.length);
+    }
 
-  const formatTurnaroundTime = (minutes: number) => {
-    if (minutes === 0) return { h: 0, m: 0, isValid: false };
-    const h = Math.floor(minutes / 60);
-    const m = Math.round(minutes % 60);
-    return { h, m, isValid: true };
-  };
-  const turnaround = formatTurnaroundTime(avgTurnaroundMinutes);
+    const formatTurnaroundTime = (minutes: number) => {
+      if (minutes === 0) return { h: 0, m: 0, isValid: false };
+      const h = Math.floor(minutes / 60);
+      const m = Math.round(minutes % 60);
+      return { h, m, isValid: true };
+    };
+    const turnaround = formatTurnaroundTime(avgTurnaroundMinutes);
 
-  // --- Calculs Réels des Disciplines ---
-  const getDisciplineCount = (keywords: string[], typeStr?: string) => {
-    return dossiers.filter(d => 
-      keywords.some(k => d.nomExamen.toLowerCase().includes(k.toLowerCase())) ||
-      (typeStr && d.type === typeStr)
-    ).length;
-  };
+    const getDisciplineCount = (keywords: string[], typeStr?: string) => {
+      return dossiers.filter(d => 
+        keywords.some(k => d.nomExamen.toLowerCase().includes(k.toLowerCase())) ||
+        (typeStr && d.type === typeStr)
+      ).length;
+    };
 
-  const hematologieCount = getDisciplineCount(['nfs', 'hématologie', 'goutte']);
-  const biochimieCount = getDisciplineCount(['métabolique', 'lipidique', 'biochimie'], 'BILAN_METABOLIQUE');
-  const serologieCount = getDisciplineCount(['prénatal', 'sérologie'], 'PACK_BPN');
-  const parasitologieCount = getDisciplineCount(['paludisme', 'parasitologie']);
-  const hemostaseCount = getDisciplineCount(['hémostase', 'électrophorèse']);
+    const hematologieCount = getDisciplineCount(['nfs', 'hématologie', 'goutte']);
+    const biochimieCount = getDisciplineCount(['métabolique', 'lipidique', 'biochimie'], 'BILAN_METABOLIQUE');
+    const serologieCount = getDisciplineCount(['prénatal', 'sérologie'], 'PACK_BPN');
+    const parasitologieCount = getDisciplineCount(['paludisme', 'parasitologie']);
+    const hemostaseCount = getDisciplineCount(['hémostase', 'électrophorèse']);
 
-  const totalDossiersDiscipline = Math.max(dossiers.length, 1);
+    const totalDossiersDiscipline = Math.max(dossiers.length, 1);
 
-  const hematologiePct = Math.round((hematologieCount / totalDossiersDiscipline) * 100);
-  const biochimiePct = Math.round((biochimieCount / totalDossiersDiscipline) * 100);
-  const serologiePct = Math.round((serologieCount / totalDossiersDiscipline) * 100);
-  const parasitologiePct = Math.round((parasitologieCount / totalDossiersDiscipline) * 100);
-  const hemostasePct = Math.round((hemostaseCount / totalDossiersDiscipline) * 100);
+    const getAutomateCount = (keyword: string) => {
+      return dossiers.filter(d => (d.automateType || '').toLowerCase().includes(keyword.toLowerCase())).length;
+    };
 
-  // --- Calculs Réels des Automates (basé sur automateType) ---
-  const getAutomateCount = (keyword: string) => {
-    return dossiers.filter(d => (d.automateType || '').toLowerCase().includes(keyword.toLowerCase())).length;
-  };
+    const stepAccueil = Math.max(dossiers.length, 1);
+    const stepPrelevement = dossiers.filter(d => d.statut !== 'BROUILLON').length; 
+    const stepAutomate = dossiers.filter(d => ['EN_COURS', 'A_VALIDER', 'VALIDE', 'IMPRIME'].includes(d.statut)).length;
+    const stepRevue = dossiers.filter(d => ['A_VALIDER', 'VALIDE', 'IMPRIME'].includes(d.statut)).length;
+    const stepValidation = dossiers.filter(d => ['VALIDE', 'IMPRIME'].includes(d.statut)).length;
+    const stepRemis = dossiers.filter(d => d.statut === 'IMPRIME').length;
 
-  const mindrayCount = getAutomateCount('mindray');
-  const sysmexCount = getAutomateCount('sysmex');
-  const selectraCount = getAutomateCount('selectra');
-  const interlabCount = getAutomateCount('interlab');
-  
-  // Utilisation d'un total "safe" pour éviter division par zéro, ou par rapport au total des dossiers
-  const totalDossiersAutomates = Math.max(dossiers.length, 1);
+    return {
+      totalDossiers,
+      dossiersValides,
+      dossiersEnAttente,
+      tauxValidation,
+      turnaround,
+      hematologiePct: Math.round((hematologieCount / totalDossiersDiscipline) * 100),
+      biochimiePct: Math.round((biochimieCount / totalDossiersDiscipline) * 100),
+      serologiePct: Math.round((serologieCount / totalDossiersDiscipline) * 100),
+      parasitologiePct: Math.round((parasitologieCount / totalDossiersDiscipline) * 100),
+      hemostasePct: Math.round((hemostaseCount / totalDossiersDiscipline) * 100),
+      
+      mindrayPct: Math.round((getAutomateCount('mindray') / totalDossiersDiscipline) * 100),
+      sysmexPct: Math.round((getAutomateCount('sysmex') / totalDossiersDiscipline) * 100),
+      selectraPct: Math.round((getAutomateCount('selectra') / totalDossiersDiscipline) * 100),
+      interlabPct: Math.round((getAutomateCount('interlab') / totalDossiersDiscipline) * 100),
 
-  const mindrayPct = Math.round((mindrayCount / totalDossiersAutomates) * 100);
-  const sysmexPct = Math.round((sysmexCount / totalDossiersAutomates) * 100);
-  const selectraPct = Math.round((selectraCount / totalDossiersAutomates) * 100);
-  const interlabPct = Math.round((interlabCount / totalDossiersAutomates) * 100);
+      pctAccueil: 100,
+      pctPrelevement: Math.round((stepPrelevement / stepAccueil) * 100),
+      pctCentrifugation: Math.round((stepPrelevement / stepAccueil) * 100),
+      pctAutomate: Math.round((stepAutomate / stepAccueil) * 100),
+      pctSaisie: Math.round((stepAutomate / stepAccueil) * 100),
+      pctRevue: Math.round((stepRevue / stepAccueil) * 100),
+      pctValidation: Math.round((stepValidation / stepAccueil) * 100),
+      pctRemis: Math.round((stepRemis / stepAccueil) * 100)
+    };
+  }, [dossiers]);
 
-  // --- Calculs Réels du Cycle de Traitement ---
-  const stepAccueil = Math.max(dossiers.length, 1);
-  const stepPrelevement = dossiers.filter(d => d.statut !== 'BROUILLON').length; 
-  const stepCentrifugation = stepPrelevement; // Simplification pour la démo
-  const stepAutomate = dossiers.filter(d => ['EN_COURS', 'A_VALIDER', 'VALIDE', 'IMPRIME'].includes(d.statut)).length;
-  const stepSaisie = stepAutomate;
-  const stepRevue = dossiers.filter(d => ['A_VALIDER', 'VALIDE', 'IMPRIME'].includes(d.statut)).length;
-  const stepValidation = dossiers.filter(d => ['VALIDE', 'IMPRIME'].includes(d.statut)).length;
-  const stepRemis = dossiers.filter(d => d.statut === 'IMPRIME').length;
-
-  const pctAccueil = 100;
-  const pctPrelevement = Math.round((stepPrelevement / stepAccueil) * 100);
-  const pctCentrifugation = Math.round((stepCentrifugation / stepAccueil) * 100);
-  const pctAutomate = Math.round((stepAutomate / stepAccueil) * 100);
-  const pctSaisie = Math.round((stepSaisie / stepAccueil) * 100);
-  const pctRevue = Math.round((stepRevue / stepAccueil) * 100);
-  const pctValidation = Math.round((stepValidation / stepAccueil) * 100);
-  const pctRemis = Math.round((stepRemis / stepAccueil) * 100);
+  const {
+    totalDossiers, dossiersValides, dossiersEnAttente, tauxValidation, turnaround,
+    hematologiePct, biochimiePct, serologiePct, parasitologiePct, hemostasePct,
+    mindrayPct, sysmexPct, selectraPct, interlabPct,
+    pctAccueil, pctPrelevement, pctCentrifugation, pctAutomate, pctSaisie, pctRevue, pctValidation, pctRemis
+  } = stats;
 
   // --- Calculs Réels des Cohortes ---
   // Note: Etant donné qu'il s'agit d'une fonction analytique complexe, 
@@ -305,9 +307,6 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                 <span className="text-[28px] font-extrabold tracking-tight text-[#1E3A8A] font-sans leading-none">
                   {totalDossiers}
                 </span>
-                <span className="inline-flex items-center text-[10px] font-bold text-[#059669] bg-[#D1FAE5] px-2 py-0.5 rounded-full mb-0.5">
-                  ↑ 14.2%
-                </span>
               </div>
             </motion.div>
 
@@ -352,9 +351,6 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
               <div className="flex items-end justify-between">
                 <span className="text-[28px] font-extrabold tracking-tight text-[#831843] font-sans leading-none">
                   {patients.length}
-                </span>
-                <span className="inline-flex items-center text-[10px] font-bold text-[#059669] bg-[#D1FAE5] px-2 py-0.5 rounded-full mb-0.5">
-                  ↑ 18
                 </span>
               </div>
             </motion.div>
@@ -423,7 +419,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                 Activité par Discipline Biologique
               </h3>
               <p className="text-[13px] text-slate-500 mt-1">
-                L’hématologie et la biochimie représentent 67% des examens
+                Répartition des examens prescrits
               </p>
             </div>
             <button

@@ -131,13 +131,11 @@ export const StorageService = {
 
   async getPrescribers(): Promise<Prescriber[]> {
     try {
-      const data = await db.prescribers.toArray();
-      if (data.length > 0) return data;
+      return await db.prescribers.toArray();
     } catch (e) {
       console.error('Error reading prescribers', e);
+      return [];
     }
-    await this.savePrescribers(INITIAL_PRESCRIBERS);
-    return INITIAL_PRESCRIBERS;
   },
 
   async savePrescribers(prescribers: Prescriber[]) {
@@ -198,6 +196,6 @@ export const StorageService = {
     await this.saveSettings(DEFAULT_LAB_SETTINGS);
     await this.saveCatalog(EXAM_CATALOG);
     await this.saveEquipments(INITIAL_EQUIPMENTS);
-    await this.savePrescribers(INITIAL_PRESCRIBERS);
+    await this.savePrescribers([]);
   },
 };

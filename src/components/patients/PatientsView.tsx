@@ -31,24 +31,37 @@ export const PatientsView: React.FC<PatientsViewProps> = ({
   const [genderFilter, setGenderFilter] = useState<'ALL' | 'M' | 'F'>('ALL');
   const [dossierFilter, setDossierFilter] = useState<'ALL' | 'WITH_DOSSIER' | 'NO_DOSSIER'>('ALL');
 
-  const filteredPatients = patients.filter((p) => {
-    const matchesQuery =
-      p.nom.toLowerCase().includes(search.toLowerCase()) ||
-      p.prenom.toLowerCase().includes(search.toLowerCase()) ||
-      p.id.toLowerCase().includes(search.toLowerCase()) ||
-      p.telephone.includes(search) ||
-      (p.prescripteur && p.prescripteur.toLowerCase().includes(search.toLowerCase()));
+  // Pre-compute dossiers per patient for O(1) lookups instead of O(N*M) inside filters
+  const dossiersByPatient = React.useMemo(() => {
+    const map = new Map<string, DossierReport[]>();
+    dossiers.forEach(d => {
+      const arr = map.get(d.patientId) || [];
+      arr.push(d);
+      map.set(d.patientId, arr);
+    });
+    return map;
+  }, [dossiers]);
 
-    const matchesGender = genderFilter === 'ALL' || p.sexe === genderFilter;
+  const filteredPatients = React.useMemo(() => {
+    return patients.filter((p) => {
+      const matchesQuery =
+        p.nom.toLowerCase().includes(search.toLowerCase()) ||
+        p.prenom.toLowerCase().includes(search.toLowerCase()) ||
+        p.id.toLowerCase().includes(search.toLowerCase()) ||
+        p.telephone.includes(search) ||
+        (p.prescripteur && p.prescripteur.toLowerCase().includes(search.toLowerCase()));
 
-    const patientDossiers = dossiers.filter((d) => d.patientId === p.id);
-    const matchesDossier =
-      dossierFilter === 'ALL' ||
-      (dossierFilter === 'WITH_DOSSIER' && patientDossiers.length > 0) ||
-      (dossierFilter === 'NO_DOSSIER' && patientDossiers.length === 0);
+      const matchesGender = genderFilter === 'ALL' || p.sexe === genderFilter;
 
-    return matchesQuery && matchesGender && matchesDossier;
-  });
+      const patientDossiers = dossiersByPatient.get(p.id) || [];
+      const matchesDossier =
+        dossierFilter === 'ALL' ||
+        (dossierFilter === 'WITH_DOSSIER' && patientDossiers.length > 0) ||
+        (dossierFilter === 'NO_DOSSIER' && patientDossiers.length === 0);
+
+      return matchesQuery && matchesGender && matchesDossier;
+    });
+  }, [patients, dossiersByPatient, search, genderFilter, dossierFilter]);
 
   return (
     <div className="space-y-6">
@@ -127,7 +140,7 @@ export const PatientsView: React.FC<PatientsViewProps> = ({
             <tbody className="text-[#334155] text-[13px]">
               {filteredPatients.length > 0 ? (
                 filteredPatients.map((patient) => {
-                  const patientDossiers = dossiers.filter((d) => d.patientId === patient.id);
+                  const patientDossiers = dossiersByPatient.get(patient.id) || [];
                   const lastDossier = patientDossiers[patientDossiers.length - 1];
 
                   // Row Theme by Gender

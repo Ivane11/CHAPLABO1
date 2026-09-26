@@ -37,21 +37,29 @@ export const ReportsView: React.FC<ReportsViewProps> = ({
   const [statusFilter, setStatusFilter] = useState<string>('ALL');
   const [dateFilter, setDateFilter] = useState('');
 
-  const filteredDossiers = dossiers.filter((d) => {
-    const patient = patients.find((p) => p.id === d.patientId);
-    const patientName = patient ? `${patient.nom} ${patient.prenom}`.toLowerCase() : '';
+  const patientsMap = React.useMemo(() => {
+    const map = new Map<string, Patient>();
+    patients.forEach(p => map.set(p.id, p));
+    return map;
+  }, [patients]);
 
-    const matchesSearch =
-      d.id.toLowerCase().includes(search.toLowerCase()) ||
-      d.nomExamen.toLowerCase().includes(search.toLowerCase()) ||
-      d.prescripteur.toLowerCase().includes(search.toLowerCase()) ||
-      patientName.includes(search.toLowerCase());
+  const filteredDossiers = React.useMemo(() => {
+    return dossiers.filter((d) => {
+      const patient = patientsMap.get(d.patientId);
+      const patientName = patient ? `${patient.nom} ${patient.prenom}`.toLowerCase() : '';
 
-    const matchesStatus = statusFilter === 'ALL' || d.statut === statusFilter;
-    const matchesDate = !dateFilter || d.date === dateFilter;
+      const matchesSearch =
+        d.id.toLowerCase().includes(search.toLowerCase()) ||
+        d.nomExamen.toLowerCase().includes(search.toLowerCase()) ||
+        d.prescripteur.toLowerCase().includes(search.toLowerCase()) ||
+        patientName.includes(search.toLowerCase());
 
-    return matchesSearch && matchesStatus && matchesDate;
-  });
+      const matchesStatus = statusFilter === 'ALL' || d.statut === statusFilter;
+      const matchesDate = !dateFilter || d.date === dateFilter;
+
+      return matchesSearch && matchesStatus && matchesDate;
+    });
+  }, [dossiers, patientsMap, search, statusFilter, dateFilter]);
 
   return (
     <div className="space-y-6">
@@ -122,7 +130,7 @@ export const ReportsView: React.FC<ReportsViewProps> = ({
             <tbody className="text-[#334155] text-[13px]">
               {filteredDossiers.length > 0 ? (
                 filteredDossiers.map((dossier) => {
-                  const patient = patients.find((p) => p.id === dossier.patientId);
+                  const patient = patientsMap.get(dossier.patientId);
 
                   // Row Theme Chrysalide
                   let rowBg = 'bg-gradient-to-r from-slate-50/65 to-white/90';

@@ -125,7 +125,9 @@ export const PatientProfileView: React.FC<PatientProfileViewProps> = ({
   onViewDossier,
 }) => {
   const [activeTab, setActiveTab] = useState<'infos' | 'dossiers' | 'resultats'>('dossiers');
-  const patientDossiers = dossiers.filter((d) => d.patientId === patient.id);
+  const patientDossiers = React.useMemo(() => {
+    return dossiers.filter((d) => d.patientId === patient.id);
+  }, [dossiers, patient.id]);
   const [selectedDossierId, setSelectedDossierId] = useState<string>(
     patientDossiers[patientDossiers.length - 1]?.id || ''
   );

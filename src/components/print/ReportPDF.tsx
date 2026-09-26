@@ -666,7 +666,7 @@ export const ReportPDF: React.FC<Props> = ({
     const comment = String(dossier.resultats[`COMMENT_${exam.id}`] || '');
 
     return (
-      <View key={exam.id} style={styles.examBlock}>
+      <View key={exam.id} style={styles.examBlock} wrap={!exam.id.includes('NFS')}>
         {/* En-tête coloré */}
         <View style={[styles.examHeader, { backgroundColor: headerColor }]}>
           <Text style={styles.examHeaderName}>{exam.name}</Text>

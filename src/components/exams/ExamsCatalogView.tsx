@@ -87,7 +87,7 @@ export const ExamsCatalogView: React.FC<ExamsCatalogViewProps> = ({
           >
             Toutes ({catalog.length})
           </button>
-          {categories.map((cat) => {
+          {categories.filter(cat => catalog.some(e => e.category === cat)).map((cat) => {
             const count = catalog.filter((e) => e.category === cat).length;
             return (
               <button
