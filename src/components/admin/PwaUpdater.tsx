@@ -68,10 +68,14 @@ export const PwaUpdater: React.FC<{ mode?: 'inline' | 'global' }> = ({ mode = 'i
 
   const isGlobal = mode === 'global';
 
+  const Wrapper = isGlobal ? 'div' : React.Fragment;
+  const wrapperProps = isGlobal ? { className: "fixed inset-0 z-[9999] bg-slate-900/60 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-300" } : {};
+
   return (
-    <div className={isGlobal 
-      ? "fixed bottom-6 right-6 z-[100] max-w-sm w-full bg-white/80 backdrop-blur-xl p-5 rounded-[24px] border border-white/60 shadow-2xl animate-in slide-in-from-bottom-5"
-      : "bg-white p-6 rounded-2xl border border-slate-200/90 shadow-2xs space-y-4"}>
+    <Wrapper {...wrapperProps}>
+      <div className={isGlobal 
+        ? "max-w-md w-full bg-white p-8 rounded-[32px] border border-white/60 shadow-2xl animate-in zoom-in-95 duration-500"
+        : "bg-white p-6 rounded-2xl border border-slate-200/90 shadow-2xs space-y-4"}>
       
       {!isGlobal && (
         <div className="flex items-center gap-2.5 mb-4">
@@ -134,14 +138,16 @@ export const PwaUpdater: React.FC<{ mode?: 'inline' | 'global' }> = ({ mode = 'i
                   onClick={handlePrepareUpdate}
                   className="px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-[13px] font-bold rounded-xl shadow-sm shadow-blue-500/20 transition-all cursor-pointer flex-1"
                 >
-                  Télécharger
+                  Télécharger la mise à jour
                 </button>
-                <button
-                  onClick={() => setUpdateState('idle')}
-                  className="px-4 py-2.5 bg-white hover:bg-blue-50 border border-blue-100 text-blue-700 text-[13px] font-bold rounded-xl transition-colors cursor-pointer"
-                >
-                  Plus tard
-                </button>
+                {!isGlobal && (
+                  <button
+                    onClick={() => setUpdateState('idle')}
+                    className="px-4 py-2.5 bg-white hover:bg-blue-50 border border-blue-100 text-blue-700 text-[13px] font-bold rounded-xl transition-colors cursor-pointer"
+                  >
+                    Plus tard
+                  </button>
+                )}
               </div>
             </div>
           </div>
@@ -183,6 +189,7 @@ export const PwaUpdater: React.FC<{ mode?: 'inline' | 'global' }> = ({ mode = 'i
           </div>
         </div>
       )}
-    </div>
+      </div>
+    </Wrapper>
   );
 };
