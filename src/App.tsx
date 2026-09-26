@@ -16,6 +16,7 @@ import { ValidationModal } from './components/reports/ValidationModal';
 import { ReportPrintModal } from './components/print/ReportPrintModal';
 import { DossierDetailModal } from './components/dossiers/DossierDetailModal';
 import { LoginView } from './components/auth/LoginView';
+import { PwaUpdater } from './components/admin/PwaUpdater';
 import { StorageService } from './utils/storage';
 import { INITIAL_PRESCRIBERS } from './data/initialData';
 import { DossierReport, ExamDefinition, LabSettings, Patient, ReportStatus } from './types';
@@ -300,6 +301,7 @@ export function App() {
 
   return (
     <>
+      <PwaUpdater />
       {currentView === 'home' ? (
         <div className="min-h-screen bg-[#F8FAFC] selection:bg-[#F2EEFF] selection:text-[#6941C6] font-sans antialiased">
           <div className="max-w-[1540px] mx-auto px-4 sm:px-6 lg:px-8 pt-4 pb-8 lg:pt-6 lg:pb-12">

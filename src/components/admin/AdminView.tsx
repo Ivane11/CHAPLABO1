@@ -674,7 +674,6 @@ export const AdminView: React.FC<AdminViewProps> = ({
               </div>
             </div>
           </div>
-          <PwaUpdater />
         </div>
       )}
 
