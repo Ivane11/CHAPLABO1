@@ -19,7 +19,7 @@ import { LoginView } from './components/auth/LoginView';
 import { PwaUpdater } from './components/admin/PwaUpdater';
 import { StorageService } from './utils/storage';
 import { INITIAL_PRESCRIBERS } from './data/initialData';
-import { DossierReport, ExamDefinition, LabSettings, Patient, ReportStatus } from './types';
+import { DossierReport, ExamDefinition, LabSettings, Patient, ReportStatus, Equipment } from './types';
 
 export type ViewMode =
   | 'home'

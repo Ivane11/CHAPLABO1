@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+// @ts-ignore
 import { useRegisterSW } from 'virtual:pwa-register/react';
 import { RefreshCw, DownloadCloud, CheckCircle2, CloudCog } from 'lucide-react';
 
@@ -10,14 +11,14 @@ export const PwaUpdater: React.FC<{ mode?: 'inline' | 'global' }> = ({ mode = 'i
     needRefresh: [needRefresh, setNeedRefresh],
     updateServiceWorker,
   } = useRegisterSW({
-    onRegistered(r) {
+    onRegistered(r: ServiceWorkerRegistration | undefined) {
       if (r) {
         setInterval(() => {
           r.update();
         }, 60 * 60 * 1000); // Check every hour
       }
     },
-    onRegisterError(error) {
+    onRegisterError(error: Error) {
       console.error('SW registration error', error);
     },
   });

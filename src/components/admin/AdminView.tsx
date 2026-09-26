@@ -24,7 +24,7 @@ interface AdminViewProps {
   onToggleExamActive: (examId: string) => void;
   onUpdateExamPrice?: (examId: string, newPrice: number) => void;
   onExportBackup: () => void;
-  onImportBackup: (jsonStr: string) => boolean;
+  onImportBackup: (jsonStr: string) => Promise<boolean>;
   onFactoryReset: () => void;
   onPurgeDrafts: () => void;
 }
@@ -85,10 +85,10 @@ export const AdminView: React.FC<AdminViewProps> = ({
     const file = e.target.files?.[0];
     if (!file) return;
     const reader = new FileReader();
-    reader.onload = (event) => {
+    reader.onload = async (event) => {
       const content = event.target?.result as string;
       if (content) {
-        const ok = onImportBackup(content);
+        const ok = await onImportBackup(content);
         if (ok) {
           alert('Sauvegarde restaurée avec succès ! Les données sont synchronisées.');
         } else {

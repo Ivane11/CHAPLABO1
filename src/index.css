@@ -137,3 +137,13 @@ button {
     background-position: 0 0;
   }
 }
+
+@keyframes shine-sweep {
+  0% { background-position: 200% center; }
+  100% { background-position: -200% center; }
+}
+
+.animate-shine {
+  animation: shine-sweep 3s linear infinite;
+  background-size: 200% auto;
+}

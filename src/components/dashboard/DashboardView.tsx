@@ -128,6 +128,9 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
     const stepValidation = dossiers.filter(d => ['VALIDE', 'IMPRIME'].includes(d.statut)).length;
     const stepRemis = dossiers.filter(d => d.statut === 'IMPRIME').length;
 
+    const stepSaisie = stepAutomate;
+    const stepCentrifugation = stepPrelevement;
+
     return {
       totalDossiers,
       dossiersValides,
@@ -140,6 +143,10 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
       parasitologiePct: Math.round((parasitologieCount / totalDossiersDiscipline) * 100),
       hemostasePct: Math.round((hemostaseCount / totalDossiersDiscipline) * 100),
       
+      mindrayCount: getAutomateCount('mindray'),
+      sysmexCount: getAutomateCount('sysmex'),
+      selectraCount: getAutomateCount('selectra'),
+      interlabCount: getAutomateCount('interlab'),
       mindrayPct: Math.round((getAutomateCount('mindray') / totalDossiersDiscipline) * 100),
       sysmexPct: Math.round((getAutomateCount('sysmex') / totalDossiersDiscipline) * 100),
       selectraPct: Math.round((getAutomateCount('selectra') / totalDossiersDiscipline) * 100),
@@ -147,19 +154,25 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
 
       pctAccueil: 100,
       pctPrelevement: Math.round((stepPrelevement / stepAccueil) * 100),
-      pctCentrifugation: Math.round((stepPrelevement / stepAccueil) * 100),
+      pctCentrifugation: Math.round((stepCentrifugation / stepAccueil) * 100),
       pctAutomate: Math.round((stepAutomate / stepAccueil) * 100),
-      pctSaisie: Math.round((stepAutomate / stepAccueil) * 100),
+      pctSaisie: Math.round((stepSaisie / stepAccueil) * 100),
       pctRevue: Math.round((stepRevue / stepAccueil) * 100),
       pctValidation: Math.round((stepValidation / stepAccueil) * 100),
-      pctRemis: Math.round((stepRemis / stepAccueil) * 100)
+      pctRemis: Math.round((stepRemis / stepAccueil) * 100),
+
+      hematologieCount, biochimieCount, serologieCount, parasitologieCount, hemostaseCount,
+      stepAccueil, stepPrelevement, stepCentrifugation, stepAutomate, stepSaisie, stepRevue, stepValidation, stepRemis
     };
   }, [dossiers]);
 
   const {
     totalDossiers, dossiersValides, dossiersEnAttente, tauxValidation, turnaround,
     hematologiePct, biochimiePct, serologiePct, parasitologiePct, hemostasePct,
+    hematologieCount, biochimieCount, serologieCount, parasitologieCount, hemostaseCount,
+    mindrayCount, sysmexCount, selectraCount, interlabCount,
     mindrayPct, sysmexPct, selectraPct, interlabPct,
+    stepAccueil, stepPrelevement, stepCentrifugation, stepAutomate, stepSaisie, stepRevue, stepValidation, stepRemis,
     pctAccueil, pctPrelevement, pctCentrifugation, pctAutomate, pctSaisie, pctRevue, pctValidation, pctRemis
   } = stats;
 
@@ -304,7 +317,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                 </div>
               </div>
               <div className="flex items-end justify-between">
-                <span className="text-[28px] font-extrabold tracking-tight text-[#1E3A8A] font-sans leading-none">
+                <span className="text-[28px] font-extrabold tracking-tight text-transparent bg-clip-text bg-[linear-gradient(110deg,#1E3A8A,45%,#93C5FD,55%,#1E3A8A)] animate-shine font-sans leading-none">
                   {totalDossiers}
                 </span>
               </div>
@@ -326,7 +339,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                 </div>
               </div>
               <div className="flex items-end justify-between">
-                <span className="text-[28px] font-extrabold tracking-tight text-[#2E1065] font-sans leading-none">
+                <span className="text-[28px] font-extrabold tracking-tight text-transparent bg-clip-text bg-[linear-gradient(110deg,#2E1065,45%,#C4B5FD,55%,#2E1065)] animate-shine font-sans leading-none">
                   {dossiersEnAttente}
                 </span>
                 <span className="inline-flex items-center text-[10px] font-bold text-[#92400E] bg-[#FEF3C7] px-2 py-0.5 rounded-full mb-0.5">
@@ -349,7 +362,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                 </div>
               </div>
               <div className="flex items-end justify-between">
-                <span className="text-[28px] font-extrabold tracking-tight text-[#831843] font-sans leading-none">
+                <span className="text-[28px] font-extrabold tracking-tight text-transparent bg-clip-text bg-[linear-gradient(110deg,#831843,45%,#F9A8D4,55%,#831843)] animate-shine font-sans leading-none">
                   {patients.length}
                 </span>
               </div>
@@ -368,7 +381,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                 </div>
               </div>
               <div className="flex items-end justify-between">
-                <span className="text-[28px] font-extrabold tracking-tight text-[#78350F] font-sans leading-none flex items-baseline gap-1">
+                <span className="text-[28px] font-extrabold tracking-tight text-transparent bg-clip-text bg-[linear-gradient(110deg,#78350F,45%,#FCD34D,55%,#78350F)] animate-shine font-sans leading-none flex items-baseline gap-1">
                   {turnaround.isValid ? (
                     <>
                       {turnaround.h > 0 && <>{turnaround.h}h </>}
@@ -399,7 +412,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                 </div>
               </div>
               <div className="flex items-end justify-between">
-                <span className="text-[28px] font-extrabold tracking-tight text-[#064E3B] font-sans leading-none">
+                <span className="text-[28px] font-extrabold tracking-tight text-transparent bg-clip-text bg-[linear-gradient(110deg,#064E3B,45%,#6EE7B7,55%,#064E3B)] animate-shine font-sans leading-none">
                   {tauxValidation}%
                 </span>
                 <span className="inline-flex items-center text-[10px] font-bold text-[#92400E] bg-[#FEF3C7] px-2 py-0.5 rounded-full mb-0.5">
