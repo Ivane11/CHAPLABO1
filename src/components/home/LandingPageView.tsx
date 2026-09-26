@@ -213,6 +213,11 @@ export const LandingPageView: React.FC<LandingPageViewProps> = ({
             <Syringe className="w-12 h-12" />
           </div>
 
+          {/* Floating tiny particles for magical effect */}
+          <div className="absolute top-10 left-10 w-2 h-2 rounded-full bg-emerald-400/40 animate-ping"></div>
+          <div className="absolute bottom-10 right-20 w-3 h-3 rounded-full bg-purple-400/40 animate-pulse"></div>
+          <div className="absolute top-1/2 left-1/3 w-1.5 h-1.5 rounded-full bg-emerald-300/50 animate-bounce"></div>
+
           <h2 className="text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight font-sans relative">
             Une Plateforme Complète, Fluide et Modulaire
           </h2>
